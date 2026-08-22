@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const env = require('./config/env');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
+const authRoutes = require('./modules/auth/auth.routes');
 
 const app = express();
 
@@ -17,6 +18,8 @@ app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+app.use('/api/auth', authRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
