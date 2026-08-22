@@ -1,0 +1,39 @@
+# ---------- Tajne ----------
+.env
+.env.local
+*.pem
+*.key
+
+# ---------- Node / backend ----------
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.npm/
+coverage/
+
+# ---------- Android / Gradle ----------
+.gradle/
+local.properties
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# ---------- IDE ----------
+.idea/
+*.iml
+*.iws
+.vscode/
+
+# ---------- OS ----------
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ---------- NAPOMENA ----------
+# android/app/schemas/ se NAMERNO ne ignorise.
+# Room izvezene JSON seme moraju biti u Gitu da bi se pisale migracije.
