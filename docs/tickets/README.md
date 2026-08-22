@@ -69,3 +69,14 @@ Izvor: `prd.md`, `db.md`, `tech.md` u korenu projekta. Tiketi ne ponavljaju te d
 - **Tiket 18** je granica MVP-a. Posle njega postoji odbranjiv proizvod.
 - **Tiket 15** radi samo prosto slanje na server; **tiket 26** to nadograđuje u punu sinhronizaciju. To nije duplo pisanje nego namerno proširenje.
 - **Tiket 26** je najrizičniji u projektu i zato je izolovan.
+
+## Praćenje napretka
+
+Status svakog tiketa se vodi na **dva mesta i oba se ažuriraju u istom commitu**:
+
+1. **U samom fajlu tiketa** — kriterijumi se štikliraju (`- [ ]` postaje `- [x]`), a `**Status:** ready-for-agent` se menja u `**Status:** done`.
+2. **U [prd.md, sekcija 16](../../prd.md#16-napredak-implementacije)** — zvanična tabela napretka, sa datumom i hash-om commita.
+
+Puna procedura i pravila štikliranja (TRK-01 do TRK-07) su u `prd.md` sekcija 16. Pročitaj ih pre preuzimanja bilo kog tiketa.
+
+Najvažnije pravilo: **tiket se štiklira tek kada su svi njegovi kriterijumi ispunjeni i stvarno provereni.** Delimično završen posao ostaje neštikliran, uz napomenu šta nedostaje.
