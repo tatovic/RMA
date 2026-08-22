@@ -760,7 +760,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | # | Tiket | Faza | Gotovo | Datum | Commit | Napomena |
 |:--:|---|:--:|:--:|---|---|---|
 | 01 | Repo skelet i Express server | 2 | [x] | 2026-08-22 | aef819a | |
-| 02 | MySQL šema i globalne kategorije | 2 | [ ] | | | |
+| 02 | MySQL šema i globalne kategorije | 2 | [ ] | 2026-08-22 | | delimično — implementacija (schema.sql, db:create, db:reset, 11 kategorija) gotova; SHOW INDEX i uživo izvršavanje nisu provereni jer lokalna MySQL root lozinka nije poznata |
 | 03 | Registracija i prijava | 2 | [ ] | | | |
 | 04 | Zaštita ruta i korisnički profil | 2 | [ ] | | | |
 | 05 | CRUD predmeta sa proverom vlasništva | 2 | [ ] | | | |
