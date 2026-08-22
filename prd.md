@@ -759,7 +759,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 
 | # | Tiket | Faza | Gotovo | Datum | Commit | Napomena |
 |:--:|---|:--:|:--:|---|---|---|
-| 01 | Repo skelet i Express server | 2 | [ ] | | | |
+| 01 | Repo skelet i Express server | 2 | [x] | 2026-08-22 | TBD | |
 | 02 | MySQL šema i globalne kategorije | 2 | [ ] | | | |
 | 03 | Registracija i prijava | 2 | [ ] | | | |
 | 04 | Zaštita ruta i korisnički profil | 2 | [ ] | | | |
@@ -787,7 +787,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 26 | Puna sinhronizacija i offline rad | 7 | [ ] | | | |
 | 27 | Poliranje i provera projektnih zahteva | 7 | [ ] | | | |
 
-**Napredak: 0 / 27**
+**Napredak: 1 / 27**
 
 Agent koji završi tiket ažurira i ovaj brojač.
 

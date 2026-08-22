@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
 ### Verzionisanje
 
@@ -17,13 +17,13 @@
 
 ### Struktura i server
 
-- [ ] Folderi `backend/` i `android/` postoje i prate strukturu iz `tech.md` sekcija 3
-- [ ] Backend se pokreće sa `npm run dev` i restartuje se sam pri izmeni koda
-- [ ] `GET /api/health` vraća `200` sa `{"status":"ok"}`
-- [ ] Konfiguracija se čita iz `.env`, a nedostajuća obavezna promenljiva ruši server pri startu sa jasnom porukom
-- [ ] `.env.example` postoji sa praznim tajnama i commitovan je; `.env` nije u Gitu (GIT-01)
-- [ ] MySQL connection pool se uspostavlja pri startu i konekcija je u UTC vremenskoj zoni
-- [ ] Postoji centralni error handler koji je jedino mesto koje formira JSON odgovor sa greškom
-- [ ] Nepostojeća ruta vraća `404` u standardnom obliku greške iz `prd.md` sekcija 10
+- [x] Folderi `backend/` i `android/` postoje i prate strukturu iz `tech.md` sekcija 3
+- [x] Backend se pokreće sa `npm run dev` i restartuje se sam pri izmeni koda
+- [x] `GET /api/health` vraća `200` sa `{"status":"ok"}`
+- [x] Konfiguracija se čita iz `.env`, a nedostajuća obavezna promenljiva ruši server pri startu sa jasnom porukom
+- [x] `.env.example` postoji sa praznim tajnama i commitovan je; `.env` nije u Gitu (GIT-01)
+- [x] MySQL connection pool se uspostavlja pri startu i konekcija je u UTC vremenskoj zoni
+- [x] Postoji centralni error handler koji je jedino mesto koje formira JSON odgovor sa greškom
+- [x] Nepostojeća ruta vraća `404` u standardnom obliku greške iz `prd.md` sekcija 10
 
-**Napomena:** stavke pod „Verzionisanje" su odrađene tokom početnog podešavanja projekta, pre nego što je tiket preuzet. Tiket se i dalje **ne štiklira** u `prd.md` sekcija 16 dok i drugi deo ne bude gotov — vidi pravilo TRK-02.
+**Napomena:** stavke pod „Verzionisanje" su odrađene tokom početnog podešavanja projekta, pre nego što je tiket preuzet. Android folder (`android/`) je za sada prazan skelet — pravi Android projekat i biblioteke dolaze u tiketu 08, u skladu sa njegovim opsegom.
