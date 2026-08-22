@@ -759,7 +759,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 
 | # | Tiket | Faza | Gotovo | Datum | Commit | Napomena |
 |:--:|---|:--:|:--:|---|---|---|
-| 01 | Repo skelet i Express server | 2 | [x] | 2026-08-22 | TBD | |
+| 01 | Repo skelet i Express server | 2 | [x] | 2026-08-22 | aef819a | |
 | 02 | MySQL šema i globalne kategorije | 2 | [ ] | | | |
 | 03 | Registracija i prijava | 2 | [ ] | | | |
 | 04 | Zaštita ruta i korisnički profil | 2 | [ ] | | | |
