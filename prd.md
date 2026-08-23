@@ -769,7 +769,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 08 | Android projekat i build konfiguracija | 3 | [x] | 2026-08-23 | 7af68af | AVD prebačen na API 36 jer je API 37.0 preview slika imala nestabilan system_server, vidi napomenu u tiketu |
 | 09 | Lokalna Room baza | 3 | [x] | 2026-08-23 | 3b7b0ae | |
 | 10 | Mrežni sloj i obrada grešaka | 3 | [x] | 2026-08-23 | d0fc49c | |
-| 11 | Prijava i registracija na uređaju | 3 | [ ] | | | |
+| 11 | Prijava i registracija na uređaju | 3 | [x] | 2026-08-23 | e78de7c | |
 | 12 | Ljuska aplikacije i navigacija | 3 | [ ] | | | |
 | 13 | Pregled stanja i zatvaranje vertikalnog preseka | 3 | [ ] | | | |
 | 14 | Lista inventara | 4 | [ ] | | | |
