@@ -1,4 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Home Inventory</string>
+
+    <!-- Katalog gresaka — prd.md sekcija 10. Jedino mesto gde ovaj tekst sme da postoji (NFR-09). -->
+    <string name="error_validation">Neispravni podaci</string>
+    <string name="error_invalid_credentials">Pogrešan email ili lozinka</string>
+    <string name="error_token_expired">Sesija je istekla. Prijavite se ponovo.</string>
+    <string name="error_token_invalid">Sesija nije važeća. Prijavite se ponovo.</string>
+    <string name="error_account_deactivated">Vaš nalog je deaktiviran. Obratite se administratoru.</string>
+    <string name="error_forbidden">Nemate dozvolu za ovu akciju.</string>
+    <string name="error_not_found">Traženi podatak ne postoji.</string>
+    <string name="error_email_already_exists">Nalog sa ovom email adresom već postoji.</string>
+    <string name="error_category_name_taken">Kategorija sa ovim nazivom već postoji.</string>
+    <string name="error_location_name_taken">Lokacija sa ovim nazivom već postoji.</string>
+    <string name="error_category_in_use">Kategorija se koristi kod predmeta i ne može se obrisati.</string>
+    <string name="error_location_in_use">Lokacija se koristi kod predmeta i ne može se obrisati.</string>
+    <string name="error_cannot_deactivate_self">Ne možete deaktivirati sopstveni nalog.</string>
+    <string name="error_sync_conflict">Podatak je izmenjen na drugom uređaju.</string>
+    <string name="error_wrong_current_password">Trenutna lozinka nije tačna.</string>
+    <string name="error_internal">Došlo je do greške. Pokušajte ponovo.</string>
+
+    <!-- Greske koje nastaju na klijentu — prd.md sekcija 10. -->
+    <string name="error_no_network">Nema internet konekcije. Prikazani su poslednji sačuvani podaci.</string>
+    <string name="error_server_unavailable">Server trenutno nije dostupan.</string>
+    <string name="error_currency_unavailable">Kurs trenutno nije dostupan.</string>
+    <string name="error_unknown">Došlo je do greške. Pokušajte ponovo.</string>
 </resources>

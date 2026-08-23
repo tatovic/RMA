@@ -45,6 +45,13 @@ android {
         viewBinding = true
         buildConfig = true
     }
+
+    testOptions {
+        unitTests {
+            // android.util.Log nije mokovan u JUnit testovima bez Robolectric-a; SafeApiCall ga koristi za ERR-04.
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 kotlin {
@@ -94,6 +101,7 @@ dependencies {
     implementation(libs.swiperefreshlayout)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.room.testing)
