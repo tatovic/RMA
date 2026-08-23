@@ -4,16 +4,29 @@
 
 **Blocked by:** 07 — Demo inventar i Postman kolekcija.
 
-**Status:** ready-for-agent
+**Status:** ready-for-agent (delimično — vidi napomenu ispod)
 
-- [ ] Projekat se otvara i sinhronizuje u Android Studiju bez grešaka
-- [ ] Gradle koristi JDK isporučen uz Android Studio, ne Javu iz sistemskog PATH-a, vidi tech.md sekcija 1
-- [ ] Minimalna podržana verzija Androida je API 26 (NFR-13)
-- [ ] Sve biblioteke iz tech.md sekcija 2.2 su dodate i razrešene; verzije označene sa proveriti su potvrđene pri prvom sinhronizovanju
-- [ ] JitPack repozitorijum je dodat, jer biblioteka za grafikone dolazi odatle
-- [ ] ViewBinding je uključen, Compose nije prisutan nigde u projektu
-- [ ] Material 3 tema je postavljena, sa definisanim svetlim i tamnim varijantama (NFR-10)
-- [ ] Adrese backenda i eksternog servisa za kurseve dolaze iz build konfiguracije, ne iz koda
-- [ ] Konfiguracija mrežne bezbednosti dozvoljava nešifrovan saobraćaj isključivo ka lokalnim razvojnim adresama (SEC-11)
-- [ ] Aplikacija ima dozvolu za pristup internetu i pokreće se na emulatoru sa praznim ekranom
-- [ ] Emulator sa sistemskom slikom je kreiran i radi
+- [x] Projekat se otvara i sinhronizuje u Android Studiju bez grešaka — verifikovano komandnolinijskim `gradle wrapper` + `gradlew :app:assembleDebug` (BUILD SUCCESSFUL), pošto Android Studio GUI nije dostupan agentu u ovoj sesiji; potrebna kratka provera u samom Studiju
+- [x] Gradle koristi JDK isporučen uz Android Studio, ne Javu iz sistemskog PATH-a, vidi tech.md sekcija 1
+- [x] Minimalna podržana verzija Androida je API 26 (NFR-13)
+- [x] Sve biblioteke iz tech.md sekcija 2.2 su dodate i razrešene; verzije označene sa proveriti su potvrđene pri prvom sinhronizovanju (stvarne dostupne verzije se razlikuju od nagađanja u tech.md, vidi napomenu)
+- [x] JitPack repozitorijum je dodat, jer biblioteka za grafikone dolazi odatle
+- [x] ViewBinding je uključen, Compose nije prisutan nigde u projektu
+- [x] Material 3 tema je postavljena, sa definisanim svetlim i tamnim varijantama (NFR-10)
+- [x] Adrese backenda i eksternog servisa za kurseve dolaze iz build konfiguracije, ne iz koda
+- [x] Konfiguracija mrežne bezbednosti dozvoljava nešifrovan saobraćaj isključivo ka lokalnim razvojnim adresama (SEC-11)
+- [ ] Aplikacija ima dozvolu za pristup internetu i pokreće se na emulatoru sa praznim ekranom — dozvola je dodata, ali pokretanje na emulatoru nije potvrđeno (vidi napomenu)
+- [ ] Emulator sa sistemskom slikom je kreiran i radi — AVD `Pixel6_API37` (system image `android-37.0;google_apis;x86_64`) je kreiran, ali se ne pokreće (vidi napomenu)
+
+### Napomena — odstupanja i status
+
+**Blokator:** ova razvojna mašina nema instaliranu hardversku akceleraciju za emulator (ni Hyper-V/WHPX ni Android Emulator Hypervisor Driver). `emulator.exe` odbija da pokrene x86_64 sistemsku sliku bez nje. Instalacija/uključivanje toga je promena sistemskih podešavanja koja zahteva administratorska prava i po pravilima agenta se ne radi automatski — korisnik je obavešten i sam će to podesiti, posle čega se emulator pokreće i preostala dva kriterijuma potvrđuju.
+
+**Odstupanja od tech.md (očekivana, jer su verzije označene "proveriti"):**
+- AGP: `9.3.1` (najnovija stabilna u trenutku rada), ne "proveriti iz šablona"
+- Kotlin: `2.3.21`, KSP: `2.3.11` — birano po kompatibilnosti sa AGP 9.3.1 kroz stvarni build, ne naslepo
+- Hilt: `2.60.1` (tech.md je nagađao "2.5x")
+- Room: `2.7.2`, Navigation: `2.9.8` (novije od tech.md pretpostavke `2.8.x`, jer `2.8.x` safeargs plugin ne radi sa AGP 9.0+ novim DSL-om)
+- AGP 9.0 ukida potrebu za zasebnim `org.jetbrains.kotlin.android` pluginom, ali KSP (Room/Hilt/Glide) to još ne podržava, pa je u `gradle.properties` dodato `android.builtInKotlin=false` i `android.newDsl=false` da bi se zadržao tradicionalni tok dok se alati ne uklope
+
+Sve navedeno je verifikovano stvarnim Gradle build-om (ne pretpostavkom), u skladu sa tech.md pravilom "ne pinuj naslepo".

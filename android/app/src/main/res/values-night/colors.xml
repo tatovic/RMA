@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tamna varijanta -->
+    <color name="md_theme_dark_primary">#B7C3FF</color>
+    <color name="md_theme_dark_onPrimary">#00218A</color>
+    <color name="md_theme_dark_secondary">#C4C6DD</color>
+    <color name="md_theme_dark_onSecondary">#2D3142</color>
+    <color name="md_theme_dark_background">#121318</color>
+    <color name="md_theme_dark_onBackground">#E3E2E9</color>
+    <color name="md_theme_dark_surface">#121318</color>
+    <color name="md_theme_dark_onSurface">#E3E2E9</color>
+    <color name="md_theme_dark_error">#FFB4AB</color>
+    <color name="md_theme_dark_onError">#690005</color>
+</resources>

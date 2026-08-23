@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Svetla varijanta -->
+    <color name="md_theme_light_primary">#3D5AFE</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_secondary">#5B6178</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_background">#FDFBFF</color>
+    <color name="md_theme_light_onBackground">#1A1B21</color>
+    <color name="md_theme_light_surface">#FDFBFF</color>
+    <color name="md_theme_light_onSurface">#1A1B21</color>
+    <color name="md_theme_light_error">#BA1A1A</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+</resources>
