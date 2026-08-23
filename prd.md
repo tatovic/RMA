@@ -766,7 +766,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 05 | CRUD predmeta sa proverom vlasništva | 2 | [x] | 2026-08-23 | 1643f53 | |
 | 06 | Kategorije i lokacije preko API-ja | 2 | [x] | 2026-08-23 | 0ef2e56 | |
 | 07 | Demo inventar i Postman kolekcija | 2 | [x] | 2026-08-23 | ee67b8e | |
-| 08 | Android projekat i build konfiguracija | 3 | [x] | 2026-08-23 | 079cb67 | AVD prebačen na API 36 jer je API 37.0 preview slika imala nestabilan system_server, vidi napomenu u tiketu |
+| 08 | Android projekat i build konfiguracija | 3 | [x] | 2026-08-23 | 7af68af | AVD prebačen na API 36 jer je API 37.0 preview slika imala nestabilan system_server, vidi napomenu u tiketu |
 | 09 | Lokalna Room baza | 3 | [ ] | | | |
 | 10 | Mrežni sloj i obrada grešaka | 3 | [ ] | | | |
 | 11 | Prijava i registracija na uređaju | 3 | [ ] | | | |
