@@ -6,7 +6,9 @@ const morgan = require('morgan');
 const env = require('./config/env');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
+const authenticate = require('./middleware/authenticate');
 const authRoutes = require('./modules/auth/auth.routes');
+const usersRoutes = require('./modules/users/users.routes');
 
 const app = express();
 
@@ -20,6 +22,10 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+
+app.use('/api', authenticate);
+
+app.use('/api/users', usersRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
