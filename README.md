@@ -61,6 +61,21 @@ npm run dev
 
 Android projekat se otvara u Android Studiju iz foldera `android/`. Emulator dolazi do backenda preko `10.0.2.2:3000`.
 
+## Demo nalog
+
+`npm run seed` puni bazu demo inventarom od šezdesetak predmeta, raspoređenih po svim kategorijama i lokacijama.
+
+| Polje | Vrednost |
+|---|---|
+| Email | `demo@homeinventory.rs` |
+| Lozinka | `Demo1234` |
+
+Seed je idempotentan — ponovno pokretanje briše i ponovo kreira samo ovaj nalog, bez uticaja na ostale korisnike.
+
+## Postman kolekcija
+
+[backend/postman/home-inventory.postman_collection.json](backend/postman/home-inventory.postman_collection.json) pokriva svaki endpoint API-ja, uključujući scenario provere vlasništva (BR-002). Uvesti u Postman i pokrenuti kao Collection Run odozgo nadole — promenljiva `token` se puni automatski posle registracije/prijave.
+
 ## Napomena o bezbednosti
 
 Repozitorijum je **javan**. `.env` se nikada ne commituje — u repo ide samo `.env.example` sa praznim vrednostima. Puna pravila su u [tech.md, sekcija 14](tech.md#14-git-strategija).

@@ -1,0 +1,708 @@
+{
+  "info": {
+    "_postman_id": "b6f4b9f0-6d2f-4c37-9b3d-0f2b0f6f6a11",
+    "name": "Home Inventory API",
+    "description": "Pokriva svaki endpoint backend API-ja (docs/tickets/07-demo-seed-i-postman.md). Pokretati kao Collection Run, odozgo nadole — kasniji zahtevi zavise od promenljivih koje postavljaju raniji.\n\n`{{token}}` se automatski puni test skriptom u zahtevu \"Registracija (test nalog)\", odmah posle prijave/registracije — nema ručnog kopiranja tokena.\n\nFolder \"Vlasništvo (ownership)\" demonstrira BR-002 / OWN-03: korisnik A kreira predmet, korisnik B ga traži i dobija 404.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api" },
+    { "key": "token", "value": "" },
+    { "key": "demoToken", "value": "" },
+    { "key": "categoryId", "value": "" },
+    { "key": "locationId", "value": "" },
+    { "key": "newLocationId", "value": "" },
+    { "key": "itemId", "value": "" },
+    { "key": "itemUpdatedAt", "value": "" },
+    { "key": "tokenA", "value": "" },
+    { "key": "tokenB", "value": "" },
+    { "key": "locationIdA", "value": "" },
+    { "key": "itemIdA", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 200', () => pm.response.to.have.status(200));",
+                  "pm.test('status: ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Registracija (test nalog)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Odgovor sadrži token i korisnika', () => {",
+                  "  pm.expect(json.token).to.be.a('string');",
+                  "  pm.expect(json.user.id).to.be.a('string');",
+                  "});",
+                  "pm.collectionVariables.set('token', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Korisnik\",\n  \"email\": \"test.{{$randomUUID}}@example.com\",\n  \"password\": \"Test1234\",\n  \"confirmPassword\": \"Test1234\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "description": "BR-001 — od druge registracije nadalje rola je uvek USER (demo nalog je već u bazi). Test u ovoj kolekciji zato prava admina proverava kroz 403 u folderu Kategorije."
+          }
+        },
+        {
+          "name": "Prijava (demo nalog)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Odgovor sadrži token', () => pm.expect(json.token).to.be.a('string'));",
+                  "pm.collectionVariables.set('demoToken', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@homeinventory.rs\",\n  \"password\": \"Demo1234\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Prijava — pogrešna lozinka (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 401', () => pm.response.to.have.status(401));",
+                  "pm.test('error.code: INVALID_CREDENTIALS', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_CREDENTIALS'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@homeinventory.rs\",\n  \"password\": \"pogresna-lozinka\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Korisnik (Users)",
+      "item": [
+        {
+          "name": "Moj profil",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Status je 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
+          }
+        },
+        {
+          "name": "Izmena profila",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 200', () => pm.response.to.have.status(200));",
+                  "pm.test('currency je EUR', () => pm.expect(pm.response.json().currency).to.eql('EUR'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"currency\": \"EUR\"\n}" },
+            "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
+          }
+        },
+        {
+          "name": "Promena lozinke",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Status je 204', () => pm.response.to.have.status(204));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Test1234\",\n  \"newPassword\": \"NovaLozinka1234\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/users/me/password", "host": ["{{baseUrl}}"], "path": ["users", "me", "password"] },
+            "description": "Menja lozinku test naloga kreiranog u koraku Registracija — ne dira demo nalog."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Kategorije",
+      "item": [
+        {
+          "name": "Lista kategorija",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Ima svih jedanaest kategorija', () => pm.expect(json.categories.length).to.eql(11));",
+                  "pm.collectionVariables.set('categoryId', json.categories[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "Kreiranje kategorije (samo ADMIN) — 403 za običnog korisnika",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 403 — BR-003, testni nalog nije ADMIN', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Nova kategorija\"\n}" },
+            "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "Izmena kategorije (samo ADMIN) — 403 za običnog korisnika",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Status je 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Izmenjen naziv\"\n}" },
+            "url": {
+              "raw": "{{baseUrl}}/categories/{{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories", "{{categoryId}}"]
+            }
+          }
+        },
+        {
+          "name": "Brisanje kategorije (samo ADMIN) — 403 za običnog korisnika",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Status je 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/categories/{{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories", "{{categoryId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lokacije",
+      "item": [
+        {
+          "name": "Lista lokacija",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Ima svih devet podrazumevanih lokacija', () => pm.expect(json.locations.length).to.eql(9));",
+                  "pm.collectionVariables.set('locationId', json.locations[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/locations", "host": ["{{baseUrl}}"], "path": ["locations"] }
+          }
+        },
+        {
+          "name": "Kreiranje lokacije",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('newLocationId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{$randomUUID}}\",\n  \"name\": \"Postman test lokacija\",\n  \"description\": \"Kreirano iz Postman kolekcije\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/locations", "host": ["{{baseUrl}}"], "path": ["locations"] }
+          }
+        },
+        {
+          "name": "Izmena lokacije",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Status je 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman test lokacija (izmenjena)\",\n  \"description\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/locations/{{newLocationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["locations", "{{newLocationId}}"]
+            }
+          }
+        },
+        {
+          "name": "Brisanje lokacije",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Status je 204', () => pm.response.to.have.status(204));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/locations/{{newLocationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["locations", "{{newLocationId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Predmeti (Items)",
+      "item": [
+        {
+          "name": "Lista predmeta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Odgovor sadrži items i serverTime', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "  pm.expect(json.serverTime).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/items", "host": ["{{baseUrl}}"], "path": ["items"] }
+          }
+        },
+        {
+          "name": "Kreiranje predmeta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('itemId', json.id);",
+                  "pm.collectionVariables.set('itemUpdatedAt', json.updatedAt);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{$randomUUID}}\",\n  \"name\": \"Postman test predmet\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"locationId\": \"{{locationId}}\",\n  \"manufacturer\": \"Test proizvođač\",\n  \"quantity\": 1,\n  \"purchasePrice\": 500000,\n  \"currency\": \"RSD\",\n  \"purchaseDate\": \"2025-01-15\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/items", "host": ["{{baseUrl}}"], "path": ["items"] }
+          }
+        },
+        {
+          "name": "Detalji predmeta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 200', () => pm.response.to.have.status(200));",
+                  "pm.test('id se poklapa', () => pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('itemId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/items/{{itemId}}", "host": ["{{baseUrl}}"], "path": ["items", "{{itemId}}"] }
+          }
+        },
+        {
+          "name": "Izmena predmeta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Naziv je izmenjen', () => pm.expect(json.name).to.eql('Postman test predmet (izmenjen)'));",
+                  "pm.collectionVariables.set('itemUpdatedAt', json.updatedAt);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman test predmet (izmenjen)\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"locationId\": \"{{locationId}}\",\n  \"quantity\": 1,\n  \"purchasePrice\": 550000,\n  \"currency\": \"RSD\",\n  \"purchaseDate\": \"2025-01-15\",\n  \"updatedAt\": \"{{itemUpdatedAt}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/items/{{itemId}}", "host": ["{{baseUrl}}"], "path": ["items", "{{itemId}}"] }
+          }
+        },
+        {
+          "name": "Brisanje predmeta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Status je 204', () => pm.response.to.have.status(204));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/items/{{itemId}}", "host": ["{{baseUrl}}"], "path": ["items", "{{itemId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Demo nalog (samo čitanje)",
+      "item": [
+        {
+          "name": "Profil demo naloga",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 200', () => pm.response.to.have.status(200));",
+                  "pm.test('email je demo@homeinventory.rs', () => pm.expect(pm.response.json().email).to.eql('demo@homeinventory.rs'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{demoToken}}" }],
+            "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
+          }
+        },
+        {
+          "name": "Predmeti demo naloga (proverava seed od ~60)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Demo nalog ima oko šezdeset predmeta', () => {",
+                  "  pm.expect(json.items.length).to.be.at.least(55);",
+                  "  pm.expect(json.items.length).to.be.at.most(65);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{demoToken}}" }],
+            "url": { "raw": "{{baseUrl}}/items", "host": ["{{baseUrl}}"], "path": ["items"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vlasništvo (ownership)",
+      "item": [
+        {
+          "name": "Korisnik A — registracija",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('tokenA', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Korisnik A\",\n  \"email\": \"korisnik-a.{{$randomUUID}}@example.com\",\n  \"password\": \"Test1234\",\n  \"confirmPassword\": \"Test1234\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Korisnik B — registracija",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('tokenB', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Korisnik B\",\n  \"email\": \"korisnik-b.{{$randomUUID}}@example.com\",\n  \"password\": \"Test1234\",\n  \"confirmPassword\": \"Test1234\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Korisnik A — kreira lokaciju",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('locationIdA', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenA}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{$randomUUID}}\",\n  \"name\": \"Lokacija korisnika A\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/locations", "host": ["{{baseUrl}}"], "path": ["locations"] }
+          }
+        },
+        {
+          "name": "Korisnik A — kreira predmet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('itemIdA', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenA}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{$randomUUID}}\",\n  \"name\": \"Predmet korisnika A\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"locationId\": \"{{locationIdA}}\",\n  \"quantity\": 1,\n  \"currency\": \"RSD\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/items", "host": ["{{baseUrl}}"], "path": ["items"] }
+          }
+        },
+        {
+          "name": "Korisnik B — traži predmet korisnika A (očekivano 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 404 — OWN-03, ne otkriva se postojanje tuđeg resursa', () => pm.response.to.have.status(404));",
+                  "pm.test('error.code: NOT_FOUND', () => pm.expect(pm.response.json().error.code).to.eql('NOT_FOUND'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenB}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/items/{{itemIdA}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["items", "{{itemIdA}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
