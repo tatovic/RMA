@@ -9,6 +9,7 @@ const errorHandler = require('./middleware/errorHandler');
 const authenticate = require('./middleware/authenticate');
 const authRoutes = require('./modules/auth/auth.routes');
 const usersRoutes = require('./modules/users/users.routes');
+const itemsRoutes = require('./modules/items/items.routes');
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api', authenticate);
 
 app.use('/api/users', usersRoutes);
+app.use('/api/items', itemsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -3,6 +3,13 @@ const toISOString = (date) => {
   return date instanceof Date ? date.toISOString() : new Date(date).toISOString();
 };
 
+// DATE kolone (bez vremena) — db.md sekcija 2.3A, format YYYY-MM-DD.
+const toDateOnlyString = (date) => {
+  if (!date) return null;
+  if (typeof date === 'string') return date.slice(0, 10);
+  return date.toISOString().slice(0, 10);
+};
+
 const serializeUser = (user) => ({
   id: user.id,
   name: user.name,
@@ -13,4 +20,29 @@ const serializeUser = (user) => ({
   createdAt: toISOString(user.created_at),
 });
 
-module.exports = { toISOString, serializeUser };
+// Mapiranje kolona — db.md sekcija 7. Svako odstupanje je bag.
+const serializeItem = (item) => ({
+  id: item.id,
+  userId: item.user_id,
+  name: item.name,
+  description: item.description,
+  categoryId: item.category_id,
+  locationId: item.location_id,
+  manufacturer: item.manufacturer,
+  model: item.model,
+  serialNumber: item.serial_number,
+  quantity: item.quantity,
+  purchasePrice: item.purchase_price === null || item.purchase_price === undefined ? null : Number(item.purchase_price),
+  estimatedValue:
+    item.estimated_value === null || item.estimated_value === undefined ? null : Number(item.estimated_value),
+  currency: item.currency,
+  purchaseDate: toDateOnlyString(item.purchase_date),
+  warrantyExpirationDate: toDateOnlyString(item.warranty_expiration_date),
+  seller: item.seller,
+  notes: item.notes,
+  createdAt: toISOString(item.created_at),
+  updatedAt: toISOString(item.updated_at),
+  deletedAt: toISOString(item.deleted_at),
+});
+
+module.exports = { toISOString, toDateOnlyString, serializeUser, serializeItem };
