@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SCR-09 — identican za obe role, tech.md sekcija 10. -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/dashboardFragment"
+        android:icon="@drawable/ic_nav_dashboard"
+        android:title="@string/nav_dashboard" />
+
+    <item
+        android:id="@+id/inventoryFragment"
+        android:icon="@drawable/ic_nav_inventory"
+        android:title="@string/nav_inventory" />
+
+    <item
+        android:id="@+id/statisticsFragment"
+        android:icon="@drawable/ic_nav_statistics"
+        android:title="@string/nav_statistics" />
+
+    <item
+        android:id="@+id/profileFragment"
+        android:icon="@drawable/ic_nav_profile"
+        android:title="@string/nav_profile" />
+
+</menu>

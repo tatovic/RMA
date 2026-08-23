@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ACT-2 — tech.md sekcija 10. SCR-06 i SCR-10 nisu u bottom meniju, do njih se dolazi iz SCR-04 i SCR-09. -->
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_main"
+    app:startDestination="@id/dashboardFragment">
+
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="rs.homeinventory.app.presentation.dashboard.DashboardFragment"
+        android:label="@string/nav_dashboard"
+        tools:layout="@layout/fragment_placeholder" />
+
+    <fragment
+        android:id="@+id/inventoryFragment"
+        android:name="rs.homeinventory.app.presentation.inventory.InventoryFragment"
+        android:label="@string/nav_inventory"
+        tools:layout="@layout/fragment_inventory">
+
+        <action
+            android:id="@+id/action_inventoryFragment_to_addEditItemFragment"
+            app:destination="@id/addEditItemFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/statisticsFragment"
+        android:name="rs.homeinventory.app.presentation.statistics.StatisticsFragment"
+        android:label="@string/nav_statistics"
+        tools:layout="@layout/fragment_placeholder" />
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="rs.homeinventory.app.presentation.profile.ProfileFragment"
+        android:label="@string/nav_profile"
+        tools:layout="@layout/fragment_profile">
+
+        <action
+            android:id="@+id/action_profileFragment_to_locationsFragment"
+            app:destination="@id/locationsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addEditItemFragment"
+        android:name="rs.homeinventory.app.presentation.additem.AddEditItemFragment"
+        android:label="@string/nav_add_edit_item"
+        tools:layout="@layout/fragment_placeholder">
+
+        <argument
+            android:name="itemId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/locationsFragment"
+        android:name="rs.homeinventory.app.presentation.locations.LocationsFragment"
+        android:label="@string/nav_locations"
+        tools:layout="@layout/fragment_placeholder" />
+
+</navigation>

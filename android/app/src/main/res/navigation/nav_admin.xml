@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ACT-4 — tech.md sekcija 10. -->
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_admin"
+    app:startDestination="@id/adminDashboardFragment">
+
+    <fragment
+        android:id="@+id/adminDashboardFragment"
+        android:name="rs.homeinventory.app.presentation.admin.AdminDashboardFragment"
+        android:label="@string/nav_admin_dashboard"
+        tools:layout="@layout/fragment_placeholder" />
+
+    <fragment
+        android:id="@+id/adminUsersFragment"
+        android:name="rs.homeinventory.app.presentation.admin.AdminUsersFragment"
+        android:label="@string/nav_admin_users"
+        tools:layout="@layout/fragment_placeholder" />
+
+    <fragment
+        android:id="@+id/adminCategoriesFragment"
+        android:name="rs.homeinventory.app.presentation.admin.AdminCategoriesFragment"
+        android:label="@string/nav_admin_categories"
+        tools:layout="@layout/fragment_placeholder" />
+
+</navigation>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ACT-3 — tech.md sekcija 10. -->
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_details"
+    app:startDestination="@id/itemDetailsFragment">
+
+    <fragment
+        android:id="@+id/itemDetailsFragment"
+        android:name="rs.homeinventory.app.presentation.itemdetails.ItemDetailsFragment"
+        android:label="@string/nav_item_details"
+        tools:layout="@layout/fragment_placeholder">
+
+        <action
+            android:id="@+id/action_itemDetailsFragment_to_addEditItemFragment"
+            app:destination="@id/addEditItemFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addEditItemFragment"
+        android:name="rs.homeinventory.app.presentation.additem.AddEditItemFragment"
+        android:label="@string/nav_add_edit_item"
+        tools:layout="@layout/fragment_placeholder">
+
+        <argument
+            android:name="itemId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </fragment>
+
+</navigation>

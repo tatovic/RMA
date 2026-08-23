@@ -27,6 +27,16 @@
             android:name=".ui.AuthenticationActivity"
             android:exported="false"
             android:theme="@style/Theme.HomeInventory" />
+
+        <activity
+            android:name=".ui.ItemDetailsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.HomeInventory" />
+
+        <activity
+            android:name=".ui.AdminActivity"
+            android:exported="false"
+            android:theme="@style/Theme.HomeInventory" />
     </application>
 
 </manifest>

@@ -1,6 +1,9 @@
 package rs.homeinventory.app.data.repository
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import retrofit2.Response
+import rs.homeinventory.app.data.local.HomeInventoryDatabase
 import rs.homeinventory.app.data.local.dao.UserDao
 import rs.homeinventory.app.data.local.prefs.UserPreferences
 import rs.homeinventory.app.data.remote.api.BackendApi
@@ -22,6 +25,7 @@ class AuthRepository @Inject constructor(
     private val api: BackendApi,
     private val userDao: UserDao,
     private val prefs: UserPreferences,
+    private val database: HomeInventoryDatabase,
     private val errorMessageProvider: ErrorMessageProvider
 ) {
     // FR-018 — registracija odmah prijavljuje korisnika, isti tok kao login.
@@ -33,6 +37,15 @@ class AuthRepository @Inject constructor(
 
     // FR-011.
     suspend fun hasValidSession(): Boolean = prefs.hasValidSession()
+
+    // SCR-09 — Profil prikazuje ime/email/rolu prijavljenog korisnika.
+    val currentUser: Flow<User?> = userDao.observeCurrentUser().map { it?.toDomain() }
+
+    // US-03/BR-005 — brise token i kompletan sadrzaj lokalne baze.
+    suspend fun logout() {
+        prefs.clearSession()
+        database.clearAllData()
+    }
 
     private suspend fun authenticate(call: suspend () -> Response<AuthResponseDto>): Resource<User> =
         when (val result = safeApiCall(errorMessageProvider, call)) {
