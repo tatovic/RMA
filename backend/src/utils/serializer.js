@@ -45,4 +45,33 @@ const serializeItem = (item) => ({
   deletedAt: toISOString(item.deleted_at),
 });
 
-module.exports = { toISOString, toDateOnlyString, serializeUser, serializeItem };
+// BR-003 — itemCount je globalan (svi korisnici), kategorije su zajedničke.
+const serializeCategory = (category) => ({
+  id: category.id,
+  name: category.name,
+  description: category.description,
+  iconKey: category.icon_key,
+  sortOrder: category.sort_order,
+  itemCount: category.item_count,
+  createdAt: toISOString(category.created_at),
+  updatedAt: toISOString(category.updated_at),
+});
+
+const serializeLocation = (location) => ({
+  id: location.id,
+  userId: location.user_id,
+  name: location.name,
+  description: location.description,
+  itemCount: location.item_count,
+  createdAt: toISOString(location.created_at),
+  updatedAt: toISOString(location.updated_at),
+});
+
+module.exports = {
+  toISOString,
+  toDateOnlyString,
+  serializeUser,
+  serializeItem,
+  serializeCategory,
+  serializeLocation,
+};

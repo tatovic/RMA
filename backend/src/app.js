@@ -10,6 +10,8 @@ const authenticate = require('./middleware/authenticate');
 const authRoutes = require('./modules/auth/auth.routes');
 const usersRoutes = require('./modules/users/users.routes');
 const itemsRoutes = require('./modules/items/items.routes');
+const categoriesRoutes = require('./modules/categories/categories.routes');
+const locationsRoutes = require('./modules/locations/locations.routes');
 
 const app = express();
 
@@ -28,6 +30,8 @@ app.use('/api', authenticate);
 
 app.use('/api/users', usersRoutes);
 app.use('/api/items', itemsRoutes);
+app.use('/api/categories', categoriesRoutes);
+app.use('/api/locations', locationsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
