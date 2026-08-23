@@ -25,4 +25,22 @@
     <string name="error_server_unavailable">Server trenutno nije dostupan.</string>
     <string name="error_currency_unavailable">Kurs trenutno nije dostupan.</string>
     <string name="error_unknown">Došlo je do greške. Pokušajte ponovo.</string>
+
+    <!-- Klijentska validacija forme registracije — prd.md sekcija 9, VR-01 do VR-05 (tiket 11). -->
+    <string name="error_vr_name">Ime mora imati najmanje 2 znaka</string>
+    <string name="error_vr_email">Unesite ispravnu email adresu</string>
+    <string name="error_vr_password">Lozinka mora imati najmanje 8 znakova</string>
+    <string name="error_vr_confirm_password">Lozinke se ne poklapaju</string>
+
+    <!-- SCR-01 Login, SCR-02 Register — tiket 11 (NFR-09). -->
+    <string name="auth_login_title">Prijava</string>
+    <string name="auth_register_title">Registracija</string>
+    <string name="auth_label_name">Ime</string>
+    <string name="auth_label_email">Email</string>
+    <string name="auth_label_password">Lozinka</string>
+    <string name="auth_label_confirm_password">Potvrda lozinke</string>
+    <string name="auth_action_login">Prijavi se</string>
+    <string name="auth_action_register">Registruj se</string>
+    <string name="auth_go_to_register">Nemate nalog? Registrujte se</string>
+    <string name="auth_go_to_login">Već imate nalog? Prijavite se</string>
 </resources>

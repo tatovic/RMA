@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- C-04 — bez magicnih brojeva u layoutima. -->
+    <dimen name="auth_screen_padding">24dp</dimen>
+    <dimen name="auth_field_spacing">12dp</dimen>
+    <dimen name="auth_section_spacing">24dp</dimen>
+    <dimen name="auth_title_spacing">32dp</dimen>
+</resources>
