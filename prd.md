@@ -761,7 +761,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 |:--:|---|:--:|:--:|---|---|---|
 | 01 | Repo skelet i Express server | 2 | [x] | 2026-08-22 | aef819a | |
 | 02 | MySQL šema i globalne kategorije | 2 | [x] | 2026-08-23 | 3150a46 | |
-| 03 | Registracija i prijava | 2 | [ ] | 2026-08-22 | | delimično — implementacija (`modules/auth`, `validate.js`, `serializer.js`, devet lokacija) gotova; validacija, BCrypt i JWT mehanizam provereni izolovano; endpoint ponašanje nad bazom (201/409/401/403, BR-001, BR-015) nije provereno jer lokalna MySQL root lozinka nije poznata |
+| 03 | Registracija i prijava | 2 | [x] | 2026-08-23 | f951c8d | |
 | 04 | Zaštita ruta i korisnički profil | 2 | [ ] | 2026-08-23 | 360ba3a | delimično — implementacija (`middleware/authenticate.js`, `modules/users`, wiring u `app.js`) gotova; verifikacija tokena (401 TOKEN_INVALID/TOKEN_EXPIRED, OWN-01) provereno uživo bez potrebe za bazom; validacija profila i lozinke (BR-012, VR-04) provereno izolovano; ponašanje koje zahteva stvarnog korisnika iz baze (is_active provera, 403 ACCOUNT_DEACTIVATED, GET/PATCH profila, WRONG_CURRENT_PASSWORD) nije provereno jer lokalna MySQL root lozinka nije poznata |
 | 05 | CRUD predmeta sa proverom vlasništva | 2 | [x] | 2026-08-23 | 1643f53 | |
 | 06 | Kategorije i lokacije preko API-ja | 2 | [x] | 2026-08-23 | 0ef2e56 | |
@@ -787,7 +787,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 26 | Puna sinhronizacija i offline rad | 7 | [ ] | | | |
 | 27 | Poliranje i provera projektnih zahteva | 7 | [ ] | | | |
 
-**Napredak: 3 / 27**
+**Napredak: 5 / 27**
 
 Agent koji završi tiket ažurira i ovaj brojač.
 
