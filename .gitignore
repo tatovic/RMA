@@ -13,6 +13,7 @@ coverage/
 
 # ---------- Android / Gradle ----------
 .gradle/
+.kotlin/
 local.properties
 build/
 captures/
@@ -22,6 +23,7 @@ captures/
 *.aab
 *.keystore
 *.jks
+hs_err_pid*.log
 
 # ---------- IDE ----------
 .idea/

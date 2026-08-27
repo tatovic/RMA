@@ -771,7 +771,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 10 | Mrežni sloj i obrada grešaka | 3 | [x] | 2026-08-23 | d0fc49c | |
 | 11 | Prijava i registracija na uređaju | 3 | [x] | 2026-08-23 | e78de7c | |
 | 12 | Ljuska aplikacije i navigacija | 3 | [x] | 2026-08-23 | 309bf2a | |
-| 13 | Pregled stanja i zatvaranje vertikalnog preseka | 3 | [ ] | | | |
+| 13 | Pregled stanja i zatvaranje vertikalnog preseka | 3 | [ ] | 2026-08-27 | | delimično — implementacija i build/unit testovi gotovi (kod pregledan, `assembleDebug` i `testDebugUnitTest` prolaze); provera na emulatoru/uređaju (četiri stanja ekrana, ~60 seed predmeta, rad bez interneta) nije izvršena u ovom okruženju i traži ručnu proveru pre štikliranja |
 | 14 | Lista inventara | 4 | [ ] | | | |
 | 15 | Dodavanje i izmena predmeta | 4 | [ ] | | | |
 | 16 | Detalji predmeta i brisanje | 4 | [ ] | | | |

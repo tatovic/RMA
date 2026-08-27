@@ -22,3 +22,6 @@ data class ItemListRow(
     val locationId: String,
     val locationName: String
 )
+
+// BR-011 — vazi za sve zbirove, statistiku i sortiranje po ceni; nigde se ne sme koristiti drugacija formula.
+fun ItemListRow.effectiveValueMinor(): Long = (estimatedValue ?: purchasePrice ?: 0L) * quantity

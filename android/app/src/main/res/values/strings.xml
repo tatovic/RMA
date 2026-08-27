@@ -64,4 +64,16 @@
     <string name="profile_logout_dialog_message">Da li ste sigurni da želite da se odjavite? Svi lokalno sačuvani podaci biće obrisani sa uređaja.</string>
     <string name="profile_logout_dialog_confirm">Odjavi se</string>
     <string name="profile_logout_dialog_cancel">Otkaži</string>
+
+    <!-- SCR-03 Dashboard — tiket 13. -->
+    <string name="dashboard_total_items_label">Ukupno predmeta</string>
+    <string name="dashboard_total_value_label">Ukupna vrednost</string>
+    <string name="dashboard_unconverted_note">Neki predmeti su u drugoj valuti i nisu uračunati u ukupnu vrednost.</string>
+    <string name="dashboard_category_breakdown_title">Predmeti po kategorijama</string>
+    <string name="dashboard_recent_items_title">Poslednje dodato</string>
+    <string name="dashboard_recent_subtitle">%1$s • %2$s</string>
+    <string name="dashboard_empty_title">Inventar je prazan</string>
+    <string name="dashboard_empty_message">Još uvek nemate dodatih predmeta. Dodajte prvi predmet da biste videli pregled stanja.</string>
+    <string name="dashboard_empty_action">Idi u inventar</string>
+    <string name="dashboard_error_retry_action">Pokušaj ponovo</string>
 </resources>

@@ -62,6 +62,31 @@ interface ItemDao {
     @Query("SELECT * FROM inventory_items WHERE id = :id AND deletedAt IS NULL")
     fun observeById(id: String): Flow<InventoryItemEntity?>
 
+    // Koristi se pri punjenju iz mreze da bi se sacuvao lokalni imagePath (DB-RULE-02) - namerno bez deletedAt filtera.
+    @Query("SELECT * FROM inventory_items WHERE id = :id")
+    suspend fun getById(id: String): InventoryItemEntity?
+
+    // ---- Poslednjih N dodatih predmeta (SCR-03) ----
+    @Query(
+        """
+        SELECT i.id, i.name, i.manufacturer, i.model, i.quantity,
+               i.purchasePrice, i.estimatedValue, i.currency,
+               i.purchaseDate, i.warrantyExpirationDate, i.imagePath,
+               i.createdAt, i.syncStatus,
+               c.id AS categoryId, c.name AS categoryName, c.iconKey AS categoryIconKey,
+               l.id AS locationId, l.name AS locationName
+        FROM inventory_items i
+        JOIN categories c ON c.id = i.categoryId
+        JOIN locations  l ON l.id = i.locationId
+        WHERE i.userId = :userId
+          AND i.deletedAt IS NULL
+          AND i.syncStatus != 'PENDING_DELETE'
+        ORDER BY i.createdAt DESC
+        LIMIT :limit
+        """
+    )
+    fun observeRecent(userId: String, limit: Int): Flow<List<ItemListRow>>
+
     // ---- Garancije (FR-053), sortirano po hitnosti - najskoriji datum prvi ----
     @Query(
         """
