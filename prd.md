@@ -772,7 +772,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 11 | Prijava i registracija na uređaju | 3 | [x] | 2026-08-23 | e78de7c | |
 | 12 | Ljuska aplikacije i navigacija | 3 | [x] | 2026-08-23 | 309bf2a | |
 | 13 | Pregled stanja i zatvaranje vertikalnog preseka | 3 | [x] | 2026-08-29 | 77f6766 | ručno provereno na emulatoru (Pixel6_API36): 63 predmeta/11 kategorija, ukupna vrednost, poslednjih 5, offline rad, ERR-05, prazno i error stanje |
-| 14 | Lista inventara | 4 | [ ] | | | |
+| 14 | Lista inventara | 4 | [x] | 2026-08-29 | 8c5fcef | ručno provereno na emulatoru (Pixel6_API36): 63 predmeta, ikonice kategorija (FR-087), klik na stavku, FAB i prazno stanje, DiffUtil bez treperenja, offline rad i ERR-05 |
 | 15 | Dodavanje i izmena predmeta | 4 | [ ] | | | |
 | 16 | Detalji predmeta i brisanje | 4 | [ ] | | | |
 | 17 | Upravljanje lokacijama | 4 | [ ] | | | |
