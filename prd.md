@@ -771,7 +771,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 10 | Mrežni sloj i obrada grešaka | 3 | [x] | 2026-08-23 | d0fc49c | |
 | 11 | Prijava i registracija na uređaju | 3 | [x] | 2026-08-23 | e78de7c | |
 | 12 | Ljuska aplikacije i navigacija | 3 | [x] | 2026-08-23 | 309bf2a | |
-| 13 | Pregled stanja i zatvaranje vertikalnog preseka | 3 | [ ] | 2026-08-27 | | delimično — implementacija i build/unit testovi gotovi (kod pregledan, `assembleDebug` i `testDebugUnitTest` prolaze); provera na emulatoru/uređaju (četiri stanja ekrana, ~60 seed predmeta, rad bez interneta) nije izvršena u ovom okruženju i traži ručnu proveru pre štikliranja |
+| 13 | Pregled stanja i zatvaranje vertikalnog preseka | 3 | [x] | 2026-08-29 | | ručno provereno na emulatoru (Pixel6_API36): 63 predmeta/11 kategorija, ukupna vrednost, poslednjih 5, offline rad, ERR-05, prazno i error stanje |
 | 14 | Lista inventara | 4 | [ ] | | | |
 | 15 | Dodavanje i izmena predmeta | 4 | [ ] | | | |
 | 16 | Detalji predmeta i brisanje | 4 | [ ] | | | |
@@ -787,7 +787,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 26 | Puna sinhronizacija i offline rad | 7 | [ ] | | | |
 | 27 | Poliranje i provera projektnih zahteva | 7 | [ ] | | | |
 
-**Napredak: 6 / 27**
+**Napredak: 13 / 27**
 
 Agent koji završi tiket ažurira i ovaj brojač.
 
