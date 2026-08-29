@@ -76,4 +76,11 @@
     <string name="dashboard_empty_message">Još uvek nemate dodatih predmeta. Dodajte prvi predmet da biste videli pregled stanja.</string>
     <string name="dashboard_empty_action">Idi u inventar</string>
     <string name="dashboard_error_retry_action">Pokušaj ponovo</string>
+
+    <!-- SCR-04 Inventar — tiket 14. -->
+    <string name="inventory_item_subtitle">%1$s • %2$s</string>
+    <string name="inventory_empty_title">Inventar je prazan</string>
+    <string name="inventory_empty_message">Još uvek nemate dodatih predmeta. Dodajte prvi da počnete da vodite evidenciju.</string>
+    <string name="inventory_empty_action">Dodaj predmet</string>
+    <string name="inventory_error_retry_action">Pokušaj ponovo</string>
 </resources>

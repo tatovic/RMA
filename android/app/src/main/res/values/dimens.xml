@@ -5,4 +5,6 @@
     <dimen name="auth_field_spacing">12dp</dimen>
     <dimen name="auth_section_spacing">24dp</dimen>
     <dimen name="auth_title_spacing">32dp</dimen>
+    <dimen name="inventory_item_image_size">48dp</dimen>
+    <dimen name="inventory_list_fab_clearance">88dp</dimen>
 </resources>

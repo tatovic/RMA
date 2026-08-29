@@ -99,6 +99,7 @@ dependencies {
     implementation(libs.mpandroidchart)
 
     implementation(libs.swiperefreshlayout)
+    implementation(libs.recyclerview)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

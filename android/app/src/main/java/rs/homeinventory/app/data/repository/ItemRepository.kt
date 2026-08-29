@@ -34,6 +34,8 @@ class ItemRepository @Inject constructor(
     fun observeRecentItems(userId: String, limit: Int): Flow<List<ItemListRow>> =
         itemDao.observeRecent(userId, limit)
 
+    fun observeAllItems(userId: String): Flow<List<ItemListRow>> = itemDao.observeAll(userId)
+
     suspend fun refresh(): Resource<Unit> = withContext(Dispatchers.IO) {
         val categoriesResult = pullAndStore({ api.getCategories() }) { response ->
             categoryDao.upsertAll(response.categories.map { it.toEntity() })
