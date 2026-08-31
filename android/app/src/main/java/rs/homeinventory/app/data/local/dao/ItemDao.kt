@@ -7,6 +7,13 @@ import kotlinx.coroutines.flow.Flow
 import rs.homeinventory.app.data.local.SyncStatus
 import rs.homeinventory.app.data.local.entity.InventoryItemEntity
 
+// Svodi kolonu na malo slovo bez srpskih dijakritika (Š,Č,Ć,Ž,Đ -> s,c,c,z,d), isti mapping kao
+// SearchQueryNormalizer na strani upita — samo tako SQL LIKE moze da poredi "sporet" sa "Šporet".
+private const val SR_FOLD_PREFIX =
+    "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LOWER("
+private const val SR_FOLD_SUFFIX =
+    "),'š','s'),'č','c'),'ć','c'),'ž','z'),'đ','d'),'Š','s'),'Č','c'),'Ć','c'),'Ž','z'),'Đ','d')"
+
 @Dao
 interface ItemDao {
 
@@ -31,8 +38,10 @@ interface ItemDao {
     fun observeAll(userId: String): Flow<List<ItemListRow>>
 
     // ---- Pretraga po SEST polja (FR-031) ----
-    // :query mora stici vec normalizovan (trim + lowercase, tech.md 8.5) - SQLite
-    // COLLATE NOCASE ne pokriva srpske dijakritike (Č, Ć, Š, Ž, Đ).
+    // :query mora stici vec normalizovan (trim + lowercase + dijakritike svedene na osnovna slova,
+    // vidi SearchQueryNormalizer, tech.md 8.5). SQLite LOWER()/COLLATE NOCASE ne pokrivaju srpske
+    // dijakritike (Č, Ć, Š, Ž, Đ), pa se i sama kolona istim REPLACE lancem svodi na golu latinicu
+    // pre poredjenja — tako upit "sporet" nalazi "Šporet" (tiket 19).
     @Query(
         """
         SELECT i.id, i.name, i.manufacturer, i.model, i.quantity,
@@ -48,12 +57,12 @@ interface ItemDao {
           AND i.deletedAt IS NULL
           AND i.syncStatus != 'PENDING_DELETE'
           AND (:query = '' OR
-               LOWER(i.name)         LIKE '%' || :query || '%' OR
-               LOWER(i.manufacturer) LIKE '%' || :query || '%' OR
-               LOWER(i.model)        LIKE '%' || :query || '%' OR
-               LOWER(i.serialNumber) LIKE '%' || :query || '%' OR
-               LOWER(c.name)         LIKE '%' || :query || '%' OR
-               LOWER(l.name)         LIKE '%' || :query || '%')
+               $SR_FOLD_PREFIX i.name         $SR_FOLD_SUFFIX LIKE '%' || :query || '%' OR
+               $SR_FOLD_PREFIX i.manufacturer $SR_FOLD_SUFFIX LIKE '%' || :query || '%' OR
+               $SR_FOLD_PREFIX i.model        $SR_FOLD_SUFFIX LIKE '%' || :query || '%' OR
+               $SR_FOLD_PREFIX i.serialNumber $SR_FOLD_SUFFIX LIKE '%' || :query || '%' OR
+               $SR_FOLD_PREFIX c.name         $SR_FOLD_SUFFIX LIKE '%' || :query || '%' OR
+               $SR_FOLD_PREFIX l.name         $SR_FOLD_SUFFIX LIKE '%' || :query || '%')
         ORDER BY i.createdAt DESC
         """
     )

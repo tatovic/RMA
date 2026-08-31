@@ -130,6 +130,18 @@ class ItemDaoTest {
     }
 
     @Test
+    fun search_matchesSerbianDiacriticsFoldedToPlainLatin() = runTest {
+        // upit stize vec normalizovan (SearchQueryNormalizer: trim + lowercase + sklonjena dijakritika,
+        // isto mapiranje kao SR_FOLD_* u ItemDao), pa "sporet" mora da nadje "Šporet" (tiket 19).
+        itemDao.upsert(item(id = "1", name = "Šporet", manufacturer = "Gorenje"))
+        itemDao.upsert(item(id = "2", name = "Frižider", manufacturer = "Đorđević"))
+
+        assertEquals(listOf("1"), itemDao.search(userId, "sporet").first().map { it.id })
+        assertEquals(listOf("2"), itemDao.search(userId, "frizider").first().map { it.id })
+        assertEquals(listOf("2"), itemDao.search(userId, "dordevic").first().map { it.id })
+    }
+
+    @Test
     fun search_excludesDeletedItems() = runTest {
         itemDao.upsert(item(id = "1", name = "Samsung TV", manufacturer = "Samsung"))
         itemDao.upsert(

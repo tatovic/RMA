@@ -18,3 +18,6 @@ const val EXTRA_ITEM_DELETED_ID = "extra_item_deleted_id"
 
 // FR-027 — trajanje opoziva brisanja predmeta.
 const val DELETE_UNDO_DURATION_MS = 5_000
+
+// FR-032 — zadrska pretrage pre osvezavanja rezultata.
+const val SEARCH_DEBOUNCE_MS = 300L

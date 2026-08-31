@@ -1,5 +1,6 @@
 package rs.homeinventory.app.presentation.inventory
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,6 +12,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -22,6 +25,8 @@ import rs.homeinventory.app.data.repository.AuthRepository
 import rs.homeinventory.app.data.repository.ItemRepository
 import rs.homeinventory.app.domain.util.MoneyFormatter
 import rs.homeinventory.app.util.Resource
+import rs.homeinventory.app.util.SEARCH_DEBOUNCE_MS
+import rs.homeinventory.app.util.SearchQueryNormalizer
 import rs.homeinventory.app.util.UiState
 import javax.inject.Inject
 
@@ -30,7 +35,8 @@ import javax.inject.Inject
 @HiltViewModel
 class InventoryViewModel @Inject constructor(
     private val itemRepository: ItemRepository,
-    authRepository: AuthRepository
+    authRepository: AuthRepository,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val currentUser = authRepository.currentUser.filterNotNull()
@@ -39,6 +45,28 @@ class InventoryViewModel @Inject constructor(
     // da li Fragment vec sluša, jer refresh() proverava items.value pre nego sto UI pretplati state.
     private val items: StateFlow<List<ItemListRow>> = currentUser
         .flatMapLatest { itemRepository.observeAllItems(it.id) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    // FR-031/NFR-04 — cuva se u SavedStateHandle da uneti pojam prezivi rotaciju ekrana (tiket 19).
+    val searchQuery: StateFlow<String> = savedStateHandle.getStateFlow(KEY_SEARCH_QUERY, "")
+
+    fun onSearchQueryChanged(query: String) {
+        savedStateHandle[KEY_SEARCH_QUERY] = query
+    }
+
+    // FR-032 — 300ms zadrska pre nego sto se upit normalizuje i posalje u bazu (tech.md 8.5).
+    // Prazan upit (pocetno stanje ili brzo brisanje pretrage) se ne odlaze - lista se odmah vraca.
+    private val normalizedQuery = searchQuery
+        .debounce { if (it.isBlank()) 0L else SEARCH_DEBOUNCE_MS }
+        .distinctUntilChanged()
+        .map(SearchQueryNormalizer::normalize)
+
+    // FR-031 — pretraga po sest polja se izvrsava nad Room-om (ItemDao.search), upit stize vec
+    // normalizovan iz Kotlina, a ne oslanja se samo na sirovo SQL poredjenje (tiket 19).
+    private val searchResults: StateFlow<List<ItemListRow>> = combine(
+        currentUser, normalizedQuery
+    ) { user, query -> user.id to query }
+        .flatMapLatest { (userId, query) -> itemRepository.searchItems(userId, query) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val refreshPhase = MutableStateFlow<RefreshPhase>(RefreshPhase.Loading)
@@ -52,9 +80,9 @@ class InventoryViewModel @Inject constructor(
     val snackbarMessage: SharedFlow<String> = _snackbarMessage.asSharedFlow()
 
     val state: StateFlow<UiState<List<InventoryItemUi>>> = combine(
-        items, refreshPhase
-    ) { rows, phase ->
-        toUiState(rows, phase)
+        items, searchResults, refreshPhase
+    ) { allRows, filteredRows, phase ->
+        toUiState(allRows, filteredRows, phase)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Loading)
 
     init {
@@ -74,11 +102,15 @@ class InventoryViewModel @Inject constructor(
         }
     }
 
+    // Prisustvo lokalnih podataka (allRows) se proverava odvojeno od filtriranih rezultata (filteredRows) -
+    // pretraga bez pogotka ne sme da izgleda kao da inventar nikad nije ucitan (Loading/Error).
     private fun toUiState(
-        rows: List<ItemListRow>,
+        allRows: List<ItemListRow>,
+        filteredRows: List<ItemListRow>,
         phase: RefreshPhase
     ): UiState<List<InventoryItemUi>> = when {
-        rows.isNotEmpty() -> UiState.Success(rows.map(::toItemUi))
+        filteredRows.isNotEmpty() -> UiState.Success(filteredRows.map(::toItemUi))
+        allRows.isNotEmpty() -> UiState.Empty
         phase is RefreshPhase.Loading -> UiState.Loading
         phase is RefreshPhase.Failed -> UiState.Error(phase.message)
         else -> UiState.Empty
@@ -109,5 +141,9 @@ class InventoryViewModel @Inject constructor(
         data object Loading : RefreshPhase
         data object Done : RefreshPhase
         data class Failed(val message: String) : RefreshPhase
+    }
+
+    private companion object {
+        const val KEY_SEARCH_QUERY = "search_query"
     }
 }

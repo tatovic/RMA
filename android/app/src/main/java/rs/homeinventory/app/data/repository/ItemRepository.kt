@@ -49,6 +49,11 @@ class ItemRepository @Inject constructor(
 
     fun observeAllItems(userId: String): Flow<List<ItemListRow>> = itemDao.observeAll(userId)
 
+    // SCR-04 — pretraga po sest polja (FR-031, tiket 19); :query mora stici vec normalizovan
+    // (SearchQueryNormalizer), search() u ItemDao dodatno svodi kolone na istu golu latinicu.
+    fun searchItems(userId: String, normalizedQuery: String): Flow<List<ItemListRow>> =
+        itemDao.search(userId, normalizedQuery)
+
     // SCR-06 — padajuce liste za kategoriju i lokaciju (tiket 15).
     fun observeCategories(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
 

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
@@ -53,6 +54,12 @@ class InventoryFragment : Fragment(R.layout.fragment_inventory) {
         binding.recyclerItems.adapter = adapter
         binding.recyclerItems.setHasFixedSize(true)
 
+        // FR-031/NFR-04 — uneti pojam se cita iz SavedStateHandle-a, prezivljava rotaciju ekrana (tiket 19).
+        binding.editSearch.setText(viewModel.searchQuery.value)
+        binding.editSearch.doAfterTextChanged { text ->
+            viewModel.onSearchQueryChanged(text?.toString().orEmpty())
+        }
+
         binding.swipeRefresh.setOnRefreshListener { viewModel.refresh() }
 
         binding.fabAddItem.setOnClickListener {
@@ -88,7 +95,22 @@ class InventoryFragment : Fragment(R.layout.fragment_inventory) {
         when (state) {
             is UiState.Success -> adapter.submitList(state.data)
             is UiState.Error -> binding.textErrorMessage.text = state.message
-            UiState.Loading, UiState.Empty -> Unit
+            UiState.Empty -> renderEmpty()
+            UiState.Loading -> Unit
+        }
+    }
+
+    // FR-031 — prazan rezultat pretrage objasnjava se trazenim pojmom, za razliku od potpuno
+    // praznog inventara koji poziva na dodavanje prvog predmeta (tiket 19).
+    private fun renderEmpty() {
+        val term = viewModel.searchQuery.value.trim()
+        val isSearching = term.isNotEmpty()
+        binding.textEmptyTitle.isVisible = !isSearching
+        binding.buttonEmptyAction.isVisible = !isSearching
+        binding.textEmptyMessage.text = if (isSearching) {
+            getString(R.string.inventory_search_empty_message, term)
+        } else {
+            getString(R.string.inventory_empty_message)
         }
     }
 

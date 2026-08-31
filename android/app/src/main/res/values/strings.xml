@@ -85,6 +85,10 @@
     <string name="inventory_error_retry_action">Pokušaj ponovo</string>
     <string name="inventory_item_saved_confirmation">Predmet je sačuvan.</string>
 
+    <!-- SCR-04 Pretraga — tiket 19, FR-031/FR-032. -->
+    <string name="inventory_search_hint">Pretraži naziv, proizvođača, model, serijski broj, kategoriju ili lokaciju</string>
+    <string name="inventory_search_empty_message">Nema rezultata za \"%1$s\". Pokušajte drugačiji pojam.</string>
+
     <!-- Klijentska validacija forme predmeta — prd.md sekcija 9, VR-06 do VR-17 (tiket 15). -->
     <string name="error_vr_item_name">Naziv mora imati najmanje 2 znaka</string>
     <string name="error_vr_item_category">Izaberite kategoriju</string>
