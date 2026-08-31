@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SCR-05 — panel filtera i sortiranja liste inventara, deli InventoryViewModel sa SCR-04 (tiket 20). -->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/auth_screen_padding"
+        android:paddingTop="@dimen/auth_field_spacing"
+        android:paddingBottom="@dimen/auth_section_spacing">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/inventory_filter_title"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+        <!-- FR-038 — svih sest opcija sortiranja. -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:text="@string/inventory_filter_sort_title"
+            android:textAppearance="?attr/textAppearanceLabelLarge" />
+
+        <RadioGroup
+            android:id="@+id/radioGroupSort"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/radioSortNewest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/inventory_sort_newest" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/radioSortOldest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/inventory_sort_oldest" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/radioSortNameAsc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/inventory_sort_name_asc" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/radioSortNameDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/inventory_sort_name_desc" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/radioSortPriceAsc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/inventory_sort_price_asc" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/radioSortPriceDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/inventory_sort_price_desc" />
+
+        </RadioGroup>
+
+        <!-- FR-033 — kategorija, vise izbora. -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:text="@string/inventory_filter_category_title"
+            android:textAppearance="?attr/textAppearanceLabelLarge" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupCategories"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_field_spacing" />
+
+        <!-- FR-034 — lokacija, vise izbora. -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:text="@string/inventory_filter_location_title"
+            android:textAppearance="?attr/textAppearanceLabelLarge" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupLocations"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_field_spacing" />
+
+        <!-- FR-035/BR-009 — raspon cene u valuti prikaza. -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:text="@string/inventory_filter_price_title"
+            android:textAppearance="?attr/textAppearanceLabelLarge" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_field_spacing"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutMinPrice"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/auth_field_spacing"
+                android:layout_weight="1"
+                android:hint="@string/inventory_filter_price_from">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editMinPrice"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutMaxPrice"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="@string/inventory_filter_price_to">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editMaxPrice"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
+
+        <!-- FR-036 — godina kupovine. -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutPurchaseYear"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:hint="@string/inventory_filter_purchase_year">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editPurchaseYear"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:maxLength="4"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- FR-037 — garancija. -->
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/checkUnderWarranty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:text="@string/inventory_filter_under_warranty" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/checkWarrantyExpiringSoon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/inventory_filter_warranty_expiring_soon" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonResetFilters"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/inventory_filter_reset" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonDone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/auth_field_spacing"
+                android:layout_weight="1"
+                android:text="@string/inventory_filter_done" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

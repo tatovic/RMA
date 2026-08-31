@@ -89,6 +89,28 @@
     <string name="inventory_search_hint">Pretraži naziv, proizvođača, model, serijski broj, kategoriju ili lokaciju</string>
     <string name="inventory_search_empty_message">Nema rezultata za \"%1$s\". Pokušajte drugačiji pojam.</string>
 
+    <!-- SCR-05 Filteri i sortiranje — tiket 20, FR-033 do FR-038. -->
+    <string name="inventory_filter_button_description">Filteri i sortiranje</string>
+    <string name="inventory_filter_title">Filteri i sortiranje</string>
+    <string name="inventory_filter_sort_title">Sortiraj po</string>
+    <string name="inventory_sort_name_asc">Naziv A-Z</string>
+    <string name="inventory_sort_name_desc">Naziv Z-A</string>
+    <string name="inventory_sort_price_asc">Cena rastuće</string>
+    <string name="inventory_sort_price_desc">Cena opadajuće</string>
+    <string name="inventory_sort_newest">Najnovije dodato</string>
+    <string name="inventory_sort_oldest">Najstarije dodato</string>
+    <string name="inventory_filter_category_title">Kategorija</string>
+    <string name="inventory_filter_location_title">Lokacija</string>
+    <string name="inventory_filter_price_title">Raspon cene</string>
+    <string name="inventory_filter_price_from">Od (%1$s)</string>
+    <string name="inventory_filter_price_to">Do (%1$s)</string>
+    <string name="inventory_filter_purchase_year">Godina kupovine</string>
+    <string name="inventory_filter_under_warranty">Samo pod garancijom</string>
+    <string name="inventory_filter_warranty_expiring_soon">Garancija uskoro ističe</string>
+    <string name="inventory_filter_reset">Poništi sve filtere</string>
+    <string name="inventory_filter_done">Gotovo</string>
+    <string name="inventory_filter_empty_message">Nijedan predmet ne odgovara izabranim filterima.</string>
+
     <!-- Klijentska validacija forme predmeta — prd.md sekcija 9, VR-06 do VR-17 (tiket 15). -->
     <string name="error_vr_item_name">Naziv mora imati najmanje 2 znaka</string>
     <string name="error_vr_item_category">Izaberite kategoriju</string>

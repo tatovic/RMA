@@ -13,12 +13,12 @@
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="@dimen/auth_screen_padding"
+        android:layout_marginStart="@dimen/auth_screen_padding"
         android:layout_marginTop="@dimen/auth_field_spacing"
         android:hint="@string/inventory_search_hint"
         app:endIconMode="clear_text"
         app:startIconDrawable="@drawable/ic_search"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/buttonFilter"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -32,6 +32,37 @@
             tools:text="garaža" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- SCR-05 — otvara panel filtera/sortiranja (tiket 20). -->
+    <ImageButton
+        android:id="@+id/buttonFilter"
+        android:layout_width="@dimen/inventory_filter_button_size"
+        android:layout_height="0dp"
+        android:layout_marginEnd="@dimen/auth_screen_padding"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/inventory_filter_button_description"
+        android:padding="@dimen/inventory_filter_button_padding"
+        android:src="@drawable/ic_filter"
+        app:layout_constraintBottom_toBottomOf="@id/layoutSearch"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/layoutSearch"
+        app:tint="?attr/colorOnSurfaceVariant" />
+
+    <!-- Broj aktivnih filtera (FR-033 do FR-037). -->
+    <TextView
+        android:id="@+id/textFilterBadge"
+        android:layout_width="@dimen/inventory_filter_badge_size"
+        android:layout_height="@dimen/inventory_filter_badge_size"
+        android:background="@drawable/bg_filter_badge"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:textColor="?attr/colorOnError"
+        android:textSize="10sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@id/buttonFilter"
+        app:layout_constraintTop_toTopOf="@id/buttonFilter"
+        tools:text="2"
+        tools:visibility="visible" />
 
     <ProgressBar
         android:id="@+id/progressLoading"

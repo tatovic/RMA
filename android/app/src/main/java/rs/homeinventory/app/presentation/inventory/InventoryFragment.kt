@@ -60,6 +60,11 @@ class InventoryFragment : Fragment(R.layout.fragment_inventory) {
             viewModel.onSearchQueryChanged(text?.toString().orEmpty())
         }
 
+        // SCR-05 — panel filtera/sortiranja, deli InventoryViewModel sa ovim ekranom (tiket 20).
+        binding.buttonFilter.setOnClickListener {
+            FilterBottomSheetFragment().show(childFragmentManager, FilterBottomSheetFragment.TAG)
+        }
+
         binding.swipeRefresh.setOnRefreshListener { viewModel.refresh() }
 
         binding.fabAddItem.setOnClickListener {
@@ -82,6 +87,8 @@ class InventoryFragment : Fragment(R.layout.fragment_inventory) {
                 launch { viewModel.isRefreshing.collect { binding.swipeRefresh.isRefreshing = it } }
                 // ERR-05 — greska mreze uz postojece lokalne podatke ide kao kratka poruka, ne ceo ekran greske.
                 launch { viewModel.snackbarMessage.collect(::showRetrySnackbar) }
+                // FR-033 do FR-037 — broj aktivnih filtera vidljiv na dugmetu (tiket 20).
+                launch { viewModel.filterState.collect(::renderFilterBadge) }
             }
         }
     }
@@ -100,18 +107,27 @@ class InventoryFragment : Fragment(R.layout.fragment_inventory) {
         }
     }
 
-    // FR-031 — prazan rezultat pretrage objasnjava se trazenim pojmom, za razliku od potpuno
-    // praznog inventara koji poziva na dodavanje prvog predmeta (tiket 19).
+    // FR-031 — prazan rezultat pretrage objasnjava se trazenim pojmom; FR-039/tiket 20 — prazan
+    // rezultat kombinacije filtera dobija svoje objasnjenje, za razliku od potpuno praznog
+    // inventara koji poziva na dodavanje prvog predmeta (tiket 19).
     private fun renderEmpty() {
         val term = viewModel.searchQuery.value.trim()
         val isSearching = term.isNotEmpty()
-        binding.textEmptyTitle.isVisible = !isSearching
-        binding.buttonEmptyAction.isVisible = !isSearching
-        binding.textEmptyMessage.text = if (isSearching) {
-            getString(R.string.inventory_search_empty_message, term)
-        } else {
-            getString(R.string.inventory_empty_message)
+        val hasActiveFilters = !viewModel.filterState.value.isEmpty
+        val isNarrowed = isSearching || hasActiveFilters
+        binding.textEmptyTitle.isVisible = !isNarrowed
+        binding.buttonEmptyAction.isVisible = !isNarrowed
+        binding.textEmptyMessage.text = when {
+            isSearching -> getString(R.string.inventory_search_empty_message, term)
+            hasActiveFilters -> getString(R.string.inventory_filter_empty_message)
+            else -> getString(R.string.inventory_empty_message)
         }
+    }
+
+    private fun renderFilterBadge(filterState: InventoryFilterState) {
+        val count = filterState.activeCount
+        binding.textFilterBadge.isVisible = count > 0
+        binding.textFilterBadge.text = count.toString()
     }
 
     // Klik otvara detalje; samo id se prosledjuje (BR-007).

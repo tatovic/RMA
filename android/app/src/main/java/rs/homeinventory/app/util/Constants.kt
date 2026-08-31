@@ -21,3 +21,7 @@ const val DELETE_UNDO_DURATION_MS = 5_000
 
 // FR-032 — zadrska pretrage pre osvezavanja rezultata.
 const val SEARCH_DEBOUNCE_MS = 300L
+
+// FR-037/BR-010 — podrazumevani prag "garancija uskoro istice" za filter u listi inventara, dok
+// podesivi prag po korisniku (FR-051, tiket 22) ne postoji.
+const val WARRANTY_EXPIRING_SOON_DEFAULT_DAYS = 30L

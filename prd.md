@@ -778,7 +778,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 17 | Upravljanje lokacijama | 4 | [x] | 2026-08-31 | ec9c1ef | ručno provereno na emulatoru (Pixel6_API36): lista sa brojem predmeta po lokaciji (FR-049), dodavanje sa validacijom (prazan naziv), VR-19 duplikat naziva (409 sa servera prikazan kao poruka), izmena naziva/opisa odmah vidljiva u listi, BR-014 blokirano brisanje sa tačnim brojem predmeta (Garaža, 7 predmeta), brisanje prazne lokacije uz potvrdu i trenutni nestanak iz liste, padajuća lista u formi predmeta odmah odražava trenutne lokacije |
 | 18 | Fotografije predmeta | 4 | [x] | 2026-08-31 | 4199e86 | ručno provereno na emulatoru (Pixel6_API36): fotografija iz galerije (sistemski Photo Picker) i kamerom (FR-081), smanjenje na 1080px duže stranice i kompresija (FR-082, potvrđeno 1080×2400→486×1080), fajl u privatnom skladištu aplikacije preživljava restart aplikacije, prikaz na listi i detaljima, zamena i brisanje predmeta uklanjaju fajl sa diska (posle isteka opoziva od 5s da se ne pokvari FR-027), predmet bez fotografije i dalje prikazuje ikonicu kategorije, odbijena dozvola za kameru daje poruku bez rušenja; u toku ručne provere pronađen i ispravljen bag (nedostajao mkdirs() pre prvog upisa fotografije, izazivao rušenje) |
 | 19 | Pretraga inventara | 5 | [x] | 2026-08-31 | 4438523 | ručno provereno na emulatoru (Pixel6_API36): polje vidljivo na ekranu, upit "frizider" (bez dijakritike) nalazi "Frižider" iz demo podataka, pretraga po lokaciji ("kuhinja" vraća sve iz Kuhinje), prazan rezultat sa porukom "Nema rezultata za sporet", pojam preživljava rotaciju ekrana, X ikonica brzo briše upit i vraća punu listu (potvrđeno posle ponovljene provere — prvi pokušaji su lažno negativni zbog adb touch-injection flakiness, ne bag u aplikaciji); connectedDebugAndroidTest (ItemDaoTest, 6/6) na istom uređaju pokriva svih šest polja i dijakritike |
-| 20 | Filteri i sortiranje | 5 | [ ] | | | |
+| 20 | Filteri i sortiranje | 5 | [x] | 2026-08-31 | | build i unit testovi prolaze (`assembleDebug`, `testDebugUnitTest`); nije ručno provereno na emulatoru — nema pristupa emulatoru u ovoj sesiji. Cena se filtrira/sortira samo u valuti prikaza korisnika (BR-009); prava konverzija dolazi u tiketu 21 |
 | 21 | Kursna lista i valuta prikaza | 6 | [ ] | | | |
 | 22 | Praćenje garancija | 6 | [ ] | | | |
 | 23 | Statistika sa grafikonima | 6 | [ ] | | | |
@@ -787,7 +787,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 26 | Puna sinhronizacija i offline rad | 7 | [ ] | | | |
 | 27 | Poliranje i provera projektnih zahteva | 7 | [ ] | | | |
 
-**Napredak: 19 / 27**
+**Napredak: 20 / 27**
 
 Agent koji završi tiket ažurira i ovaj brojač.
 
