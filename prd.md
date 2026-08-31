@@ -774,7 +774,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 13 | Pregled stanja i zatvaranje vertikalnog preseka | 3 | [x] | 2026-08-29 | 77f6766 | ručno provereno na emulatoru (Pixel6_API36): 63 predmeta/11 kategorija, ukupna vrednost, poslednjih 5, offline rad, ERR-05, prazno i error stanje |
 | 14 | Lista inventara | 4 | [x] | 2026-08-29 | 8c5fcef | ručno provereno na emulatoru (Pixel6_API36): 63 predmeta, ikonice kategorija (FR-087), klik na stavku, FAB i prazno stanje, DiffUtil bez treperenja, offline rad i ERR-05 |
 | 15 | Dodavanje i izmena predmeta | 4 | [x] | 2026-08-31 | ec4ebf0 | rezim izmene proveren pregledom koda (deljen put sa dodavanjem); ulazna tačka za UI izmenu dolazi u tiketu 16 |
-| 16 | Detalji predmeta i brisanje | 4 | [x] | 2026-08-31 | | ručno provereno na emulatoru (Pixel6_API36): BR-007 (samo itemId, exported="false"), sva popunjena/prazna polja, izmena deli formu sa tiketom 15, BR-008 dijalog sa nazivom, soft delete + DELETE poziv (204 u backend logu), trenutni nestanak iz liste i zbirova (63→62), poruka za nepostojeći id bez rušenja aplikacije |
+| 16 | Detalji predmeta i brisanje | 4 | [x] | 2026-08-31 | 53fa801 | ručno provereno na emulatoru (Pixel6_API36): BR-007 (samo itemId, exported="false"), sva popunjena/prazna polja, izmena deli formu sa tiketom 15, BR-008 dijalog sa nazivom, soft delete + DELETE poziv (204 u backend logu), trenutni nestanak iz liste i zbirova (63→62), poruka za nepostojeći id bez rušenja aplikacije |
 | 17 | Upravljanje lokacijama | 4 | [ ] | | | |
 | 18 | Fotografije predmeta | 4 | [ ] | | | |
 | 19 | Pretraga inventara | 5 | [ ] | | | |
