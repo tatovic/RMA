@@ -123,6 +123,13 @@
     <string name="additem_discard_dialog_confirm">Odbaci</string>
     <string name="additem_discard_dialog_cancel">Nastavi uređivanje</string>
 
+    <!-- SCR-06 Fotografija predmeta — tiket 18 (FR-081 do FR-084). -->
+    <string name="additem_label_photo">Fotografija</string>
+    <string name="additem_photo_chooser_title">Dodaj fotografiju</string>
+    <string name="additem_photo_chooser_camera">Kamera</string>
+    <string name="additem_photo_chooser_gallery">Galerija</string>
+    <string name="additem_photo_camera_permission_denied">Dozvola za kameru je odbijena, fotografija se ne može snimiti</string>
+
     <!-- SCR-07 Detalji predmeta — tiket 16. -->
     <string name="itemdetails_action_edit">Izmeni</string>
     <string name="itemdetails_action_delete">Obriši</string>

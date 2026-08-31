@@ -22,6 +22,7 @@ import rs.homeinventory.app.data.remote.dto.LocationRequestDto
 import rs.homeinventory.app.data.remote.mapper.toDto
 import rs.homeinventory.app.data.remote.mapper.toEntity
 import rs.homeinventory.app.util.ErrorMessageProvider
+import rs.homeinventory.app.util.PhotoStorage
 import rs.homeinventory.app.util.Resource
 import rs.homeinventory.app.util.safeApiCall
 import java.util.UUID
@@ -37,7 +38,8 @@ class ItemRepository @Inject constructor(
     private val itemDao: ItemDao,
     private val categoryDao: CategoryDao,
     private val locationDao: LocationDao,
-    private val errorMessageProvider: ErrorMessageProvider
+    private val errorMessageProvider: ErrorMessageProvider,
+    private val photoStorage: PhotoStorage
 ) {
     fun observeCategoryAggregates(userId: String): Flow<List<CategoryAggregate>> =
         itemDao.observeCategoryAggregates(userId)
@@ -71,6 +73,13 @@ class ItemRepository @Inject constructor(
     // Opoziv brisanja u roku od pet sekundi (FR-027).
     suspend fun undoDelete(id: String): Unit = withContext(Dispatchers.IO) {
         itemDao.undoDelete(id)
+    }
+
+    // FR-086 — fotografija se trajno brise tek kad opoziv (FR-027) vise nije moguc, da undo ne bi
+    // ostavio predmet bez slike. Poziva se posle isteka snackbar-a za opoziv (tiket 16 UI).
+    suspend fun finalizeDeletedItemPhoto(id: String): Unit = withContext(Dispatchers.IO) {
+        val item = itemDao.getById(id) ?: return@withContext
+        if (item.deletedAt != null) photoStorage.delete(item.imagePath)
     }
 
     // Cuvanje predmeta (FR-029, FR-030) — upisuje lokalno pa odmah pokusava jedan poziv ka serveru.

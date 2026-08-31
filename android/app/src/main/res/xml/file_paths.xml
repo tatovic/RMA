@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FR-081 — privremeni fajl za snimak kamerom, deljen sa aplikacijom kamere preko FileProvider-a. -->
+<paths>
+    <cache-path name="captured_photos" path="captured_photos/" />
+</paths>

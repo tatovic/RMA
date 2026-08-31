@@ -89,6 +89,12 @@ class InventoryViewModel @Inject constructor(
         viewModelScope.launch { itemRepository.undoDelete(id) }
     }
 
+    // FR-086 — poziva se kad opoziv vise nije ponudjen (snackbar istekao/odbacen), da fotografija
+    // trajno obrisanog predmeta ne ostane na disku.
+    fun finalizeDeletedItemPhoto(id: String) {
+        viewModelScope.launch { itemRepository.finalizeDeletedItemPhoto(id) }
+    }
+
     private fun toItemUi(row: ItemListRow): InventoryItemUi = InventoryItemUi(
         id = row.id,
         name = row.name,

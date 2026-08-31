@@ -26,6 +26,7 @@ import rs.homeinventory.app.util.EXTRA_ITEM_DELETED_ID
 import rs.homeinventory.app.util.RESULT_ITEM_SAVED
 import rs.homeinventory.app.util.Resource
 import rs.homeinventory.app.util.UiState
+import rs.homeinventory.app.util.photoFile
 
 // SCR-07 — detalji predmeta i brisanje (tiket 16). BR-007: ekran prima samo itemId i sam ucitava iz Room-a.
 @AndroidEntryPoint
@@ -82,7 +83,10 @@ class ItemDetailsFragment : Fragment(R.layout.fragment_item_details) {
         // Fotografija se prikazuje samo ako postoji.
         binding.imagePhoto.isVisible = item.imagePath != null
         if (item.imagePath != null) {
-            Glide.with(binding.imagePhoto).load(item.imagePath).centerCrop().into(binding.imagePhoto)
+            Glide.with(binding.imagePhoto)
+                .load(photoFile(requireContext(), item.imagePath))
+                .centerCrop()
+                .into(binding.imagePhoto)
         } else {
             Glide.with(binding.imagePhoto).clear(binding.imagePhoto)
         }

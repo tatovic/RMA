@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import rs.homeinventory.app.R
 import rs.homeinventory.app.databinding.ItemInventoryBinding
+import rs.homeinventory.app.util.photoFile
 import rs.homeinventory.app.util.resolveCategoryIcon
 
 // Poredjenje po id-u da lista ne trepe pri osvezavanju (tiket 14); ListAdapter + DiffUtil
@@ -39,7 +40,7 @@ class InventoryItemAdapter(
             // FR-087 — bez fotografije prikazuje se ikonica kategorije umesto prazne povrsine.
             if (item.imagePath != null) {
                 Glide.with(binding.imageItem)
-                    .load(item.imagePath)
+                    .load(photoFile(binding.root.context, item.imagePath))
                     .placeholder(resolveCategoryIcon(item.categoryIconKey))
                     .error(resolveCategoryIcon(item.categoryIconKey))
                     .centerCrop()

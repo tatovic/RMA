@@ -96,6 +96,9 @@ dependencies {
     implementation(libs.glide)
     ksp(libs.glide.compiler)
 
+    // FR-082 — EXIF orijentacija fotografije sa kamere pre kompresije.
+    implementation(libs.exifinterface)
+
     implementation(libs.mpandroidchart)
 
     implementation(libs.swiperefreshlayout)

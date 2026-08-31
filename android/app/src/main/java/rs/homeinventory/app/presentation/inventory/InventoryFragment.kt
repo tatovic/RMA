@@ -103,6 +103,12 @@ class InventoryFragment : Fragment(R.layout.fragment_inventory) {
     private fun showDeleteUndoSnackbar(itemId: String) {
         Snackbar.make(binding.root, R.string.itemdetails_delete_confirmation, DELETE_UNDO_DURATION_MS)
             .setAction(R.string.itemdetails_delete_undo) { viewModel.undoDelete(itemId) }
+            .addCallback(object : Snackbar.Callback() {
+                // FR-086 — ako korisnik nije opozvao brisanje, fotografija predmeta se sada trajno uklanja.
+                override fun onDismissed(transientBottomBar: Snackbar, event: Int) {
+                    if (event != DISMISS_EVENT_ACTION) viewModel.finalizeDeletedItemPhoto(itemId)
+                }
+            })
             .show()
     }
 

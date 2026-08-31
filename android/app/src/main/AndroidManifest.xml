@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- FR-081 — slikanje kamerom; deklarisano da se moze traziti u toku rada (dozvola se obradjuje na licu mesta). -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:name=".HomeInventoryApp"
@@ -37,6 +40,17 @@
             android:name=".ui.AdminActivity"
             android:exported="false"
             android:theme="@style/Theme.HomeInventory" />
+
+        <!-- FR-081 — deljenje internog fajla sa aplikacijom kamere dok se fotografija snima. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

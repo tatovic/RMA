@@ -4,16 +4,16 @@
 
 **Blocked by:** 17 — Upravljanje lokacijama.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Sa forme za unos predmeta korisnik može izabrati fotografiju iz galerije kroz sistemski birač
-- [ ] Korisnik može i da slika novu fotografiju kamerom (FR-081)
-- [ ] Izabrana slika se smanjuje na najviše 1080 piksela duže stranice i komprimuje (FR-082)
-- [ ] Slika se kopira u privatni prostor aplikacije, a u bazu ide samo naziv fajla (FR-083)
-- [ ] Slika preživljava brisanje originala iz galerije i restart aplikacije
-- [ ] Fotografija se nikada ne šalje na server (FR-084)
-- [ ] Slika se prikazuje na stavci u listi i na ekranu detalja
-- [ ] Zamena fotografije briše prethodni fajl, da se ne gomilaju
-- [ ] Brisanje predmeta briše i njegov fajl fotografije (FR-086)
-- [ ] Predmet bez fotografije i dalje prikazuje ikonicu svoje kategorije
-- [ ] Odbijena dozvola za kameru se obrađuje porukom, bez rušenja aplikacije
+- [x] Sa forme za unos predmeta korisnik može izabrati fotografiju iz galerije kroz sistemski birač
+- [x] Korisnik može i da slika novu fotografiju kamerom (FR-081)
+- [x] Izabrana slika se smanjuje na najviše 1080 piksela duže stranice i komprimuje (FR-082)
+- [x] Slika se kopira u privatni prostor aplikacije, a u bazu ide samo naziv fajla (FR-083)
+- [x] Slika preživljava brisanje originala iz galerije i restart aplikacije
+- [x] Fotografija se nikada ne šalje na server (FR-084)
+- [x] Slika se prikazuje na stavci u listi i na ekranu detalja
+- [x] Zamena fotografije briše prethodni fajl, da se ne gomilaju
+- [x] Brisanje predmeta briše i njegov fajl fotografije (FR-086)
+- [x] Predmet bez fotografije i dalje prikazuje ikonicu svoje kategorije
+- [x] Odbijena dozvola za kameru se obrađuje porukom, bez rušenja aplikacije

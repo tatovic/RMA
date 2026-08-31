@@ -1,9 +1,15 @@
 package rs.homeinventory.app.presentation.additem
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import androidx.activity.addCallback
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
@@ -14,8 +20,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
@@ -30,6 +38,7 @@ import rs.homeinventory.app.util.RESULT_ITEM_SAVED
 import rs.homeinventory.app.util.RESULT_ITEM_SAVED_ID
 import rs.homeinventory.app.util.Resource
 import rs.homeinventory.app.util.SUPPORTED_CURRENCIES
+import rs.homeinventory.app.util.photoFile
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -57,8 +66,28 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
     private var selectedPurchaseDate: LocalDate? = null
     private var selectedWarrantyDate: LocalDate? = null
 
+    // Fotografija koju predmet vec ima (edit rezim); null u rezimu dodavanja ili ako predmet nema sliku.
+    private var existingImagePath: String? = null
+
+    // Odrediste snimka kamere u toku (FR-081) — TakePicture vraca samo uspeh/neuspeh, ne i sam Uri.
+    private var pendingCameraUri: Uri? = null
+
     // Snimak forme odmah posle popunjavanja — poredi se sa trenutnim stanjem pri napustanju ekrana.
     private var initialSnapshot: FormSnapshot? = null
+
+    private val galleryPicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) viewModel.onPhotoPicked(uri)
+    }
+
+    private val cameraCapture = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        val uri = pendingCameraUri
+        if (success && uri != null) viewModel.onPhotoPicked(uri)
+    }
+
+    // FR: odbijena dozvola za kameru se obradjuje porukom, bez rusenja aplikacije.
+    private val cameraPermissionRequest = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) launchCamera() else showCameraPermissionDenied()
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -75,6 +104,9 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
         binding.textMoreToggle.setOnClickListener {
             binding.containerMore.isVisible = !binding.containerMore.isVisible
         }
+
+        binding.imagePhotoPreview.setOnClickListener { showPhotoChooser() }
+        binding.buttonChangePhoto.setOnClickListener { showPhotoChooser() }
 
         binding.editPurchaseDate.setOnClickListener { pickDate(isWarranty = false) }
         binding.editWarrantyDate.setOnClickListener { pickDate(isWarranty = true) }
@@ -107,6 +139,7 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
                 launch { viewModel.locations.collect(::renderLocations) }
                 launch { viewModel.fieldErrors.collect(::renderFieldErrors) }
                 launch { viewModel.saveState.collect(::renderSaveState) }
+                launch { viewModel.pendingImagePath.collect(::renderPhotoPreview) }
             }
         }
 
@@ -154,6 +187,9 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
         applyCategorySelection()
         applyLocationSelection()
 
+        existingImagePath = item?.imagePath
+        renderPhotoPreview(viewModel.pendingImagePath.value)
+
         // Izmena vec ima popunjene dodatne podatke — sekcija se odmah otvara da korisnik sve vidi.
         if (hasAdditionalData(item)) binding.containerMore.isVisible = true
     }
@@ -192,6 +228,59 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
     private fun applyLocationSelection() {
         val name = locationsSnapshot.find { it.id == selectedLocationId }?.name ?: return
         binding.editLocation.setText(name, false)
+    }
+
+    // FR-081 do FR-083 — korisnik bira izmedju kamere i galerije za fotografiju predmeta.
+    private fun showPhotoChooser() {
+        val options = arrayOf(
+            getString(R.string.additem_photo_chooser_camera),
+            getString(R.string.additem_photo_chooser_gallery)
+        )
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.additem_photo_chooser_title)
+            .setItems(options) { _, which -> if (which == 0) requestCameraCapture() else openGallery() }
+            .show()
+    }
+
+    // Sistemski birac fotografija (Photo Picker) ne trazi dozvolu za pristup galeriji.
+    private fun openGallery() {
+        galleryPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
+
+    // Dozvola za kameru se trazi na licu mesta, samo kad korisnik zapravo pokusa da slika.
+    private fun requestCameraCapture() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            launchCamera()
+        } else {
+            cameraPermissionRequest.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    private fun launchCamera() {
+        val uri = viewModel.createCaptureUri()
+        pendingCameraUri = uri
+        cameraCapture.launch(uri)
+    }
+
+    private fun showCameraPermissionDenied() {
+        Snackbar.make(binding.root, R.string.additem_photo_camera_permission_denied, Snackbar.LENGTH_LONG).show()
+    }
+
+    // Novoodabrana fotografija ima prednost nad onom koju predmet vec ima (edit rezim).
+    private fun renderPhotoPreview(pendingImagePath: String?) {
+        val fileName = pendingImagePath ?: existingImagePath
+        if (fileName != null) {
+            Glide.with(binding.imagePhotoPreview)
+                .load(photoFile(requireContext(), fileName))
+                .placeholder(R.drawable.ic_add)
+                .centerCrop()
+                .into(binding.imagePhotoPreview)
+        } else {
+            Glide.with(binding.imagePhotoPreview).clear(binding.imagePhotoPreview)
+            binding.imagePhotoPreview.setImageResource(R.drawable.ic_add)
+        }
     }
 
     // Datumi se biraju iskljucivo kroz MaterialDatePicker, nikada kucanjem.
@@ -298,7 +387,8 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
         purchaseDate = selectedPurchaseDate,
         warrantyExpirationDate = selectedWarrantyDate,
         seller = binding.editSeller.text?.toString().orEmpty(),
-        notes = binding.editNotes.text?.toString().orEmpty()
+        notes = binding.editNotes.text?.toString().orEmpty(),
+        photoChanged = viewModel.pendingImagePath.value != null
     )
 
     private fun handleBackPressed() {
@@ -310,7 +400,11 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.additem_discard_dialog_title)
             .setMessage(R.string.additem_discard_dialog_message)
-            .setPositiveButton(R.string.additem_discard_dialog_confirm) { _, _ -> findNavController().popBackStack() }
+            .setPositiveButton(R.string.additem_discard_dialog_confirm) { _, _ ->
+                // Novoodabrana fotografija se odbacuje zajedno sa ostatkom forme da ne ostane na disku.
+                viewModel.discardPendingPhoto()
+                findNavController().popBackStack()
+            }
             .setNegativeButton(R.string.additem_discard_dialog_cancel, null)
             .show()
     }
@@ -335,6 +429,7 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
         val purchaseDate: LocalDate?,
         val warrantyExpirationDate: LocalDate?,
         val seller: String,
-        val notes: String
+        val notes: String,
+        val photoChanged: Boolean
     )
 }

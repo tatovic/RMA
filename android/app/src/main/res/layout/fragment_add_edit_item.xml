@@ -40,18 +40,52 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            app:constraint_referenced_ids="layoutName,layoutCategory,layoutLocation,textMoreToggle,buttonSave"
+            app:constraint_referenced_ids="containerPhoto,layoutName,layoutCategory,layoutLocation,textMoreToggle,buttonSave"
             tools:visibility="visible" />
+
+        <!-- FR-081/FR-082/FR-083 — fotografija predmeta je opciona; dodirom se bira izmedju kamere i galerije. -->
+        <FrameLayout
+            android:id="@+id/containerPhoto"
+            android:layout_width="@dimen/additem_photo_size"
+            android:layout_height="@dimen/additem_photo_size"
+            android:layout_marginTop="@dimen/auth_field_spacing"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textTitle">
+
+            <ImageView
+                android:id="@+id/imagePhotoPreview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?attr/colorSurfaceVariant"
+                android:clickable="true"
+                android:contentDescription="@string/additem_label_photo"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_add"
+                tools:src="@drawable/ic_category_electronics" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/buttonChangePhoto"
+                style="@style/Widget.Material3.FloatingActionButton.Small.Primary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:contentDescription="@string/additem_label_photo"
+                app:srcCompat="@drawable/ic_camera" />
+
+        </FrameLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/layoutName"
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_field_spacing"
             android:hint="@string/additem_label_name"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textTitle">
+            app:layout_constraintTop_toBottomOf="@id/containerPhoto">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editName"

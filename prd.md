@@ -776,7 +776,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 15 | Dodavanje i izmena predmeta | 4 | [x] | 2026-08-31 | ec4ebf0 | rezim izmene proveren pregledom koda (deljen put sa dodavanjem); ulazna tačka za UI izmenu dolazi u tiketu 16 |
 | 16 | Detalji predmeta i brisanje | 4 | [x] | 2026-08-31 | 53fa801 | ručno provereno na emulatoru (Pixel6_API36): BR-007 (samo itemId, exported="false"), sva popunjena/prazna polja, izmena deli formu sa tiketom 15, BR-008 dijalog sa nazivom, soft delete + DELETE poziv (204 u backend logu), trenutni nestanak iz liste i zbirova (63→62), poruka za nepostojeći id bez rušenja aplikacije |
 | 17 | Upravljanje lokacijama | 4 | [x] | 2026-08-31 | ec9c1ef | ručno provereno na emulatoru (Pixel6_API36): lista sa brojem predmeta po lokaciji (FR-049), dodavanje sa validacijom (prazan naziv), VR-19 duplikat naziva (409 sa servera prikazan kao poruka), izmena naziva/opisa odmah vidljiva u listi, BR-014 blokirano brisanje sa tačnim brojem predmeta (Garaža, 7 predmeta), brisanje prazne lokacije uz potvrdu i trenutni nestanak iz liste, padajuća lista u formi predmeta odmah odražava trenutne lokacije |
-| 18 | Fotografije predmeta | 4 | [ ] | | | |
+| 18 | Fotografije predmeta | 4 | [x] | 2026-08-31 | | ručno provereno na emulatoru (Pixel6_API36): fotografija iz galerije (sistemski Photo Picker) i kamerom (FR-081), smanjenje na 1080px duže stranice i kompresija (FR-082, potvrđeno 1080×2400→486×1080), fajl u privatnom skladištu aplikacije preživljava restart aplikacije, prikaz na listi i detaljima, zamena i brisanje predmeta uklanjaju fajl sa diska (posle isteka opoziva od 5s da se ne pokvari FR-027), predmet bez fotografije i dalje prikazuje ikonicu kategorije, odbijena dozvola za kameru daje poruku bez rušenja; u toku ručne provere pronađen i ispravljen bag (nedostajao mkdirs() pre prvog upisa fotografije, izazivao rušenje) |
 | 19 | Pretraga inventara | 5 | [ ] | | | |
 | 20 | Filteri i sortiranje | 5 | [ ] | | | |
 | 21 | Kursna lista i valuta prikaza | 6 | [ ] | | | |
@@ -787,7 +787,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 26 | Puna sinhronizacija i offline rad | 7 | [ ] | | | |
 | 27 | Poliranje i provera projektnih zahteva | 7 | [ ] | | | |
 
-**Napredak: 17 / 27**
+**Napredak: 18 / 27**
 
 Agent koji završi tiket ažurira i ovaj brojač.
 

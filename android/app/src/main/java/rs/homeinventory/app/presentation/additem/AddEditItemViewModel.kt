@@ -1,9 +1,11 @@
 package rs.homeinventory.app.presentation.additem
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import rs.homeinventory.app.data.local.SyncStatus
 import rs.homeinventory.app.data.local.entity.CategoryEntity
 import rs.homeinventory.app.data.local.entity.InventoryItemEntity
@@ -22,6 +25,7 @@ import rs.homeinventory.app.data.remote.mapper.DateMapper
 import rs.homeinventory.app.data.repository.AuthRepository
 import rs.homeinventory.app.data.repository.ItemRepository
 import rs.homeinventory.app.util.ItemValidator
+import rs.homeinventory.app.util.PhotoStorage
 import rs.homeinventory.app.util.Resource
 import java.util.UUID
 import javax.inject.Inject
@@ -32,6 +36,7 @@ import javax.inject.Inject
 class AddEditItemViewModel @Inject constructor(
     private val itemRepository: ItemRepository,
     private val authRepository: AuthRepository,
+    private val photoStorage: PhotoStorage,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -52,6 +57,33 @@ class AddEditItemViewModel @Inject constructor(
 
     private val _saveState = MutableStateFlow<Resource<String>?>(null)
     val saveState: StateFlow<Resource<String>?> = _saveState.asStateFlow()
+
+    // Novoodabrana fotografija u ovoj sesiji uredjivanja (FR-081/FR-082/FR-083) — jos nije upisana na
+    // predmet, sve dok korisnik ne sacuva formu. Null znaci da fotografija nije menjana.
+    private val _pendingImagePath = MutableStateFlow<String?>(null)
+    val pendingImagePath: StateFlow<String?> = _pendingImagePath.asStateFlow()
+
+    // Korisnik je izabrao novu fotografiju (kamera ili galerija); odmah se smanjuje, kompresuje i
+    // kopira u privatni prostor aplikacije. Zamena unutar iste sesije brise prethodno odabrani fajl
+    // da se ne gomilaju (isti duh kao FR-086).
+    fun onPhotoPicked(uri: Uri) {
+        viewModelScope.launch {
+            val newFileName = withContext(Dispatchers.IO) { photoStorage.save(uri) } ?: return@launch
+            val previousPending = _pendingImagePath.value
+            _pendingImagePath.value = newFileName
+            if (previousPending != null) withContext(Dispatchers.IO) { photoStorage.delete(previousPending) }
+        }
+    }
+
+    // Napustanje forme bez cuvanja (odbacivanje izmena) - novoodabrana fotografija ne sme ostati siroce na disku.
+    fun discardPendingPhoto() {
+        val pending = _pendingImagePath.value ?: return
+        _pendingImagePath.value = null
+        viewModelScope.launch(Dispatchers.IO) { photoStorage.delete(pending) }
+    }
+
+    // FR-081 — privremeni fajl u koji aplikacija kamere upisuje snimak (deljen preko FileProvider-a).
+    fun createCaptureUri(): Uri = photoStorage.createCaptureUri()
 
     // Ucitava se tacno jednom pri otvaranju ekrana da bi popunio formu (edit rezim) — ne StateFlow,
     // da izmene korisnika kasnije (npr. posle pauze aplikacije) ne budu prepisane ponovnom emisijom.
@@ -76,6 +108,13 @@ class AddEditItemViewModel @Inject constructor(
             val isCreate = existing == null || existing.syncStatus == SyncStatus.PENDING_CREATE
             val id = itemId ?: UUID.randomUUID().toString() // FR-029 — UUID v4 generise klijent.
 
+            // FR-083 — nova fotografija (ako je odabrana) zamenjuje staru; stara se brise da se ne gomila (FR-086 duh).
+            val pendingImage = _pendingImagePath.value
+            val newImagePath = pendingImage ?: existing?.imagePath
+            if (pendingImage != null && existing?.imagePath != null) {
+                withContext(Dispatchers.IO) { photoStorage.delete(existing.imagePath) }
+            }
+
             val entity = InventoryItemEntity(
                 id = id,
                 userId = user.id,
@@ -97,11 +136,12 @@ class AddEditItemViewModel @Inject constructor(
                 createdAt = existing?.createdAt ?: now,
                 updatedAt = now, // izmena osvezava vreme poslednje promene, kreiranje ostaje netaknuto.
                 deletedAt = existing?.deletedAt,
-                imagePath = existing?.imagePath,
+                imagePath = newImagePath,
                 syncStatus = if (isCreate) SyncStatus.PENDING_CREATE else SyncStatus.PENDING_UPDATE
             )
 
             itemRepository.saveItem(entity, isCreate)
+            _pendingImagePath.value = null
             _saveState.value = Resource.Success(id)
         }
     }
