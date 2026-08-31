@@ -10,7 +10,11 @@
         android:id="@+id/itemDetailsFragment"
         android:name="rs.homeinventory.app.presentation.itemdetails.ItemDetailsFragment"
         android:label="@string/nav_item_details"
-        tools:layout="@layout/fragment_placeholder">
+        tools:layout="@layout/fragment_item_details">
+
+        <argument
+            android:name="itemId"
+            app:argType="string" />
 
         <action
             android:id="@+id/action_itemDetailsFragment_to_addEditItemFragment"

@@ -1,8 +1,10 @@
 package rs.homeinventory.app.presentation.inventory
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
@@ -18,6 +20,8 @@ import kotlinx.coroutines.launch
 import rs.homeinventory.app.R
 import rs.homeinventory.app.databinding.FragmentInventoryBinding
 import rs.homeinventory.app.ui.ItemDetailsActivity
+import rs.homeinventory.app.util.DELETE_UNDO_DURATION_MS
+import rs.homeinventory.app.util.EXTRA_ITEM_DELETED_ID
 import rs.homeinventory.app.util.EXTRA_ITEM_ID
 import rs.homeinventory.app.util.RESULT_ITEM_SAVED
 import rs.homeinventory.app.util.UiState
@@ -32,6 +36,14 @@ class InventoryFragment : Fragment(R.layout.fragment_inventory) {
     private val viewModel: InventoryViewModel by viewModels()
 
     private val adapter = InventoryItemAdapter(::openItemDetails)
+
+    // ItemDetailsActivity vraca id obrisanog predmeta da bi ovde mogao da se ponudi opoziv (FR-027, tiket 16).
+    private val itemDetailsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val deletedId = result.data?.getStringExtra(EXTRA_ITEM_DELETED_ID)
+        if (result.resultCode == Activity.RESULT_OK && deletedId != null) {
+            showDeleteUndoSnackbar(deletedId)
+        }
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -80,12 +92,18 @@ class InventoryFragment : Fragment(R.layout.fragment_inventory) {
         }
     }
 
-    // SCR-06 dolazi u tiketu 16; klik otvara detalje i dok je taj ekran jos prazan (BR-007 — samo id se prosledjuje).
+    // Klik otvara detalje; samo id se prosledjuje (BR-007).
     private fun openItemDetails(item: InventoryItemUi) {
-        startActivity(
+        itemDetailsLauncher.launch(
             Intent(requireContext(), ItemDetailsActivity::class.java)
                 .putExtra(EXTRA_ITEM_ID, item.id)
         )
+    }
+
+    private fun showDeleteUndoSnackbar(itemId: String) {
+        Snackbar.make(binding.root, R.string.itemdetails_delete_confirmation, DELETE_UNDO_DURATION_MS)
+            .setAction(R.string.itemdetails_delete_undo) { viewModel.undoDelete(itemId) }
+            .show()
     }
 
     private fun showRetrySnackbar(message: String) {

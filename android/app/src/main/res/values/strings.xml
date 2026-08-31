@@ -122,4 +122,14 @@
     <string name="additem_discard_dialog_message">Imate nesačuvane izmene. Ako izađete sada, biće izgubljene.</string>
     <string name="additem_discard_dialog_confirm">Odbaci</string>
     <string name="additem_discard_dialog_cancel">Nastavi uređivanje</string>
+
+    <!-- SCR-07 Detalji predmeta — tiket 16. -->
+    <string name="itemdetails_action_edit">Izmeni</string>
+    <string name="itemdetails_action_delete">Obriši</string>
+    <string name="itemdetails_delete_dialog_title">Brisanje predmeta</string>
+    <string name="itemdetails_delete_dialog_message">Da li ste sigurni da želite da obrišete „%1$s"?</string>
+    <string name="itemdetails_delete_dialog_confirm">Obriši</string>
+    <string name="itemdetails_delete_dialog_cancel">Otkaži</string>
+    <string name="itemdetails_delete_confirmation">Predmet je obrisan.</string>
+    <string name="itemdetails_delete_undo">Opozovi</string>
 </resources>

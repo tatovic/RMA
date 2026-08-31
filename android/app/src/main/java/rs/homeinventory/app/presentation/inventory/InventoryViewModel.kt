@@ -84,6 +84,11 @@ class InventoryViewModel @Inject constructor(
         else -> UiState.Empty
     }
 
+    // FR-027 — opoziv brisanja predmeta u roku od pet sekundi.
+    fun undoDelete(id: String) {
+        viewModelScope.launch { itemRepository.undoDelete(id) }
+    }
+
     private fun toItemUi(row: ItemListRow): InventoryItemUi = InventoryItemUi(
         id = row.id,
         name = row.name,

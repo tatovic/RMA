@@ -66,6 +66,21 @@ interface ItemDao {
     @Query("SELECT * FROM inventory_items WHERE id = :id")
     suspend fun getById(id: String): InventoryItemEntity?
 
+    // ---- Detalji predmeta (SCR-07, tiket 16) — BR-007: samo id se prosledjuje ekranu, on sam ucitava iz Room-a. ----
+    @Query(
+        """
+        SELECT i.id, i.name, i.description, i.manufacturer, i.model, i.serialNumber,
+               i.quantity, i.purchasePrice, i.estimatedValue, i.currency,
+               i.purchaseDate, i.warrantyExpirationDate, i.seller, i.notes, i.imagePath,
+               c.name AS categoryName, l.name AS locationName
+        FROM inventory_items i
+        JOIN categories c ON c.id = i.categoryId
+        JOIN locations  l ON l.id = i.locationId
+        WHERE i.id = :id AND i.deletedAt IS NULL
+        """
+    )
+    fun observeDetails(id: String): Flow<ItemDetailsRow?>
+
     // ---- Poslednjih N dodatih predmeta (SCR-03) ----
     @Query(
         """
@@ -137,6 +152,10 @@ interface ItemDao {
     // Soft delete (FR-026)
     @Query("UPDATE inventory_items SET deletedAt = :now, updatedAt = :now, syncStatus = 'PENDING_DELETE' WHERE id = :id")
     suspend fun softDelete(id: String, now: Long)
+
+    // Opoziv brisanja u roku od pet sekundi (FR-027) — puna sinhronizacija sa serverom dolazi u tiketu 26.
+    @Query("UPDATE inventory_items SET deletedAt = NULL, syncStatus = 'PENDING_UPDATE' WHERE id = :id")
+    suspend fun undoDelete(id: String)
 
     // Fizicko uklanjanje tek POSLE potvrde servera
     @Query("DELETE FROM inventory_items WHERE id = :id")

@@ -12,3 +12,9 @@ val SUPPORTED_CURRENCIES = listOf("RSD", "EUR", "USD", "CHF", "GBP", "BAM")
 // Fragment Result API — AddEditItemFragment vraca rezultat pozivajucem ekranu (tech.md sekcija 8.6).
 const val RESULT_ITEM_SAVED = "result_item_saved"
 const val RESULT_ITEM_SAVED_ID = "result_item_saved_id"
+
+// Activity Result — ItemDetailsActivity vraca id obrisanog predmeta pozivajucem ekranu (tiket 16).
+const val EXTRA_ITEM_DELETED_ID = "extra_item_deleted_id"
+
+// FR-027 — trajanje opoziva brisanja predmeta.
+const val DELETE_UNDO_DURATION_MS = 5_000

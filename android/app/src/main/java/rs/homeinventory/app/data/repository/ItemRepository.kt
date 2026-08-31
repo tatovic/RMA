@@ -8,6 +8,7 @@ import rs.homeinventory.app.data.local.SyncStatus
 import rs.homeinventory.app.data.local.dao.CategoryAggregate
 import rs.homeinventory.app.data.local.dao.CategoryDao
 import rs.homeinventory.app.data.local.dao.ItemDao
+import rs.homeinventory.app.data.local.dao.ItemDetailsRow
 import rs.homeinventory.app.data.local.dao.ItemListRow
 import rs.homeinventory.app.data.local.dao.LocationDao
 import rs.homeinventory.app.data.local.entity.CategoryEntity
@@ -48,6 +49,21 @@ class ItemRepository @Inject constructor(
     fun observeLocations(userId: String): Flow<List<LocationEntity>> = locationDao.observeAll(userId)
 
     suspend fun getItem(id: String): InventoryItemEntity? = itemDao.getById(id)
+
+    // SCR-07 — detalji predmeta (tiket 16), join sa kategorijom/lokacijom kao kod liste.
+    fun observeItemDetails(id: String): Flow<ItemDetailsRow?> = itemDao.observeDetails(id)
+
+    // Brisanje predmeta (FR-025/FR-026) — soft delete lokalno pa odmah pokusaj slanja serveru.
+    // Neuspeh slanja ne blokira korisnika; predmet ostaje PENDING_DELETE do pune sinhronizacije (tiket 26).
+    suspend fun deleteItem(id: String): Unit = withContext(Dispatchers.IO) {
+        itemDao.softDelete(id, System.currentTimeMillis())
+        safeApiCall(errorMessageProvider) { api.deleteItem(id) }
+    }
+
+    // Opoziv brisanja u roku od pet sekundi (FR-027).
+    suspend fun undoDelete(id: String): Unit = withContext(Dispatchers.IO) {
+        itemDao.undoDelete(id)
+    }
 
     // Cuvanje predmeta (FR-029, FR-030) — upisuje lokalno pa odmah pokusava jedan poziv ka serveru.
     // Neuspeh slanja ne blokira korisnika, predmet ostaje PENDING_* do pune sinhronizacije (tiket 26).

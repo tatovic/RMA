@@ -7,12 +7,13 @@
     android:layout_height="match_parent"
     android:background="?attr/colorSurface">
 
+    <!-- app:navGraph namerno izostavljen — itemId (BR-007) se prosledjuje kao argument
+         pocetne destinacije iz ItemDetailsActivity preko navController.setGraph(). -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/navHostFragment"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:defaultNavHost="true"
-        app:navGraph="@navigation/nav_details" />
+        app:defaultNavHost="true" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
