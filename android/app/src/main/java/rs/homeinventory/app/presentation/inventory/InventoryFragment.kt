@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +19,7 @@ import rs.homeinventory.app.R
 import rs.homeinventory.app.databinding.FragmentInventoryBinding
 import rs.homeinventory.app.ui.ItemDetailsActivity
 import rs.homeinventory.app.util.EXTRA_ITEM_ID
+import rs.homeinventory.app.util.RESULT_ITEM_SAVED
 import rs.homeinventory.app.util.UiState
 
 // SCR-04 — lista se osvezava sama iz Room-a, cetiri stanja po BR-017 (tech.md sekcija 5.4).
@@ -49,6 +51,11 @@ class InventoryFragment : Fragment(R.layout.fragment_inventory) {
             findNavController().navigate(R.id.action_inventoryFragment_to_addEditItemFragment)
         }
         binding.buttonErrorRetry.setOnClickListener { viewModel.refresh() }
+
+        // Forma za dodavanje/izmenu vraca rezultat ovde (tiket 15) — kratka potvrda korisniku.
+        setFragmentResultListener(RESULT_ITEM_SAVED) { _, _ ->
+            Snackbar.make(binding.root, R.string.inventory_item_saved_confirmation, Snackbar.LENGTH_SHORT).show()
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {

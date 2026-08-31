@@ -21,7 +21,7 @@
         android:id="@+id/addEditItemFragment"
         android:name="rs.homeinventory.app.presentation.additem.AddEditItemFragment"
         android:label="@string/nav_add_edit_item"
-        tools:layout="@layout/fragment_placeholder">
+        tools:layout="@layout/fragment_add_edit_item">
 
         <argument
             android:name="itemId"

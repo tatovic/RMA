@@ -4,12 +4,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import retrofit2.Response
+import rs.homeinventory.app.data.local.SyncStatus
 import rs.homeinventory.app.data.local.dao.CategoryAggregate
 import rs.homeinventory.app.data.local.dao.CategoryDao
 import rs.homeinventory.app.data.local.dao.ItemDao
 import rs.homeinventory.app.data.local.dao.ItemListRow
 import rs.homeinventory.app.data.local.dao.LocationDao
+import rs.homeinventory.app.data.local.entity.CategoryEntity
+import rs.homeinventory.app.data.local.entity.InventoryItemEntity
+import rs.homeinventory.app.data.local.entity.LocationEntity
 import rs.homeinventory.app.data.remote.api.BackendApi
+import rs.homeinventory.app.data.remote.dto.ItemDto
+import rs.homeinventory.app.data.remote.mapper.toDto
 import rs.homeinventory.app.data.remote.mapper.toEntity
 import rs.homeinventory.app.util.ErrorMessageProvider
 import rs.homeinventory.app.util.Resource
@@ -35,6 +41,30 @@ class ItemRepository @Inject constructor(
         itemDao.observeRecent(userId, limit)
 
     fun observeAllItems(userId: String): Flow<List<ItemListRow>> = itemDao.observeAll(userId)
+
+    // SCR-06 — padajuce liste za kategoriju i lokaciju (tiket 15).
+    fun observeCategories(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
+
+    fun observeLocations(userId: String): Flow<List<LocationEntity>> = locationDao.observeAll(userId)
+
+    suspend fun getItem(id: String): InventoryItemEntity? = itemDao.getById(id)
+
+    // Cuvanje predmeta (FR-029, FR-030) — upisuje lokalno pa odmah pokusava jedan poziv ka serveru.
+    // Neuspeh slanja ne blokira korisnika, predmet ostaje PENDING_* do pune sinhronizacije (tiket 26).
+    suspend fun saveItem(entity: InventoryItemEntity, isCreate: Boolean): Unit = withContext(Dispatchers.IO) {
+        itemDao.upsert(entity)
+
+        val call: suspend () -> Response<ItemDto> = if (isCreate) {
+            { api.createItem(entity.toDto()) }
+        } else {
+            { api.updateItem(entity.id, entity.toDto()) }
+        }
+
+        val result = safeApiCall(errorMessageProvider, call)
+        if (result is Resource.Success) {
+            itemDao.upsert(result.data.toEntity(keepImagePath = entity.imagePath, syncStatus = SyncStatus.SYNCED))
+        }
+    }
 
     suspend fun refresh(): Resource<Unit> = withContext(Dispatchers.IO) {
         val categoriesResult = pullAndStore({ api.getCategories() }) { response ->

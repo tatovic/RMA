@@ -5,3 +5,10 @@ const val DASHBOARD_RECENT_ITEMS_LIMIT = 5
 
 // tech.md sekcija 10 — Intent extra za ItemDetailsActivity; ceo predmet se ne prosledjuje (BR-007).
 const val EXTRA_ITEM_ID = "extra_item_id"
+
+// SCR-06 — VR-12, valute podrzane na klijentu.
+val SUPPORTED_CURRENCIES = listOf("RSD", "EUR", "USD", "CHF", "GBP", "BAM")
+
+// Fragment Result API — AddEditItemFragment vraca rezultat pozivajucem ekranu (tech.md sekcija 8.6).
+const val RESULT_ITEM_SAVED = "result_item_saved"
+const val RESULT_ITEM_SAVED_ID = "result_item_saved_id"

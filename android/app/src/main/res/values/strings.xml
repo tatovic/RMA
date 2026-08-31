@@ -83,4 +83,43 @@
     <string name="inventory_empty_message">Još uvek nemate dodatih predmeta. Dodajte prvi da počnete da vodite evidenciju.</string>
     <string name="inventory_empty_action">Dodaj predmet</string>
     <string name="inventory_error_retry_action">Pokušaj ponovo</string>
+    <string name="inventory_item_saved_confirmation">Predmet je sačuvan.</string>
+
+    <!-- Klijentska validacija forme predmeta — prd.md sekcija 9, VR-06 do VR-17 (tiket 15). -->
+    <string name="error_vr_item_name">Naziv mora imati najmanje 2 znaka</string>
+    <string name="error_vr_item_category">Izaberite kategoriju</string>
+    <string name="error_vr_item_location">Izaberite lokaciju</string>
+    <string name="error_vr_item_quantity">Količina mora biti najmanje 1</string>
+    <string name="error_vr_item_purchase_price">Cena ne može biti negativna</string>
+    <string name="error_vr_item_estimated_value">Vrednost ne može biti negativna</string>
+    <string name="error_vr_item_currency">Nepodržana valuta</string>
+    <string name="error_vr_item_purchase_date">Datum kupovine ne može biti u budućnosti</string>
+    <string name="error_vr_item_warranty_date">Datum garancije ne može biti pre datuma kupovine</string>
+    <string name="error_vr_item_text_100">Tekst je predugačak</string>
+    <string name="error_vr_item_text_1000">Tekst je predugačak</string>
+
+    <!-- SCR-06 Dodavanje/izmena predmeta — tiket 15. -->
+    <string name="additem_title_add">Dodavanje predmeta</string>
+    <string name="additem_title_edit">Izmena predmeta</string>
+    <string name="additem_label_name">Naziv</string>
+    <string name="additem_label_category">Kategorija</string>
+    <string name="additem_label_location">Lokacija</string>
+    <string name="additem_section_more">Dodatni podaci</string>
+    <string name="additem_label_description">Opis</string>
+    <string name="additem_label_manufacturer">Proizvođač</string>
+    <string name="additem_label_model">Model</string>
+    <string name="additem_label_serial_number">Serijski broj</string>
+    <string name="additem_label_quantity">Količina</string>
+    <string name="additem_label_purchase_price">Nabavna cena</string>
+    <string name="additem_label_estimated_value">Procenjena vrednost</string>
+    <string name="additem_label_currency">Valuta</string>
+    <string name="additem_label_purchase_date">Datum kupovine</string>
+    <string name="additem_label_warranty_expiration_date">Datum isteka garancije</string>
+    <string name="additem_label_seller">Prodavac</string>
+    <string name="additem_label_notes">Beleške</string>
+    <string name="additem_action_save">Sačuvaj</string>
+    <string name="additem_discard_dialog_title">Odbaciti izmene?</string>
+    <string name="additem_discard_dialog_message">Imate nesačuvane izmene. Ako izađete sada, biće izgubljene.</string>
+    <string name="additem_discard_dialog_confirm">Odbaci</string>
+    <string name="additem_discard_dialog_cancel">Nastavi uređivanje</string>
 </resources>
