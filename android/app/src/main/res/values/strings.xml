@@ -65,6 +65,9 @@
     <string name="profile_logout_dialog_confirm">Odjavi se</string>
     <string name="profile_logout_dialog_cancel">Otkaži</string>
 
+    <!-- US-15/BR-012 Valuta prikaza — tiket 21. -->
+    <string name="profile_label_currency">Valuta prikaza</string>
+
     <!-- SCR-03 Dashboard — tiket 13. -->
     <string name="dashboard_total_items_label">Ukupno predmeta</string>
     <string name="dashboard_total_value_label">Ukupna vrednost</string>
@@ -165,6 +168,9 @@
     <string name="itemdetails_delete_dialog_cancel">Otkaži</string>
     <string name="itemdetails_delete_confirmation">Predmet je obrisan.</string>
     <string name="itemdetails_delete_undo">Opozovi</string>
+
+    <!-- US-15/BR-013 Konverzija valute na detaljima predmeta — tiket 21. -->
+    <string name="itemdetails_label_converted_value">Vrednost u valuti prikaza</string>
 
     <!-- Klijentska validacija forme lokacije — prd.md sekcija 9, VR-19 (tiket 17). -->
     <string name="error_vr_location_name">Naziv mora imati između 1 i 60 znakova</string>

@@ -3,6 +3,7 @@ package rs.homeinventory.app.presentation.profile
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.ArrayAdapter
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -10,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import rs.homeinventory.app.R
@@ -31,6 +33,14 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentProfileBinding.bind(view)
 
+        binding.editCurrency.setAdapter(
+            ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, viewModel.supportedCurrencies)
+        )
+        // Promena valute prikaza odmah preracunava sve zbirove u aplikaciji (currentUser flow).
+        binding.editCurrency.setOnItemClickListener { _, _, position, _ ->
+            viewModel.updateCurrency(viewModel.supportedCurrencies[position])
+        }
+
         binding.buttonLocations.setOnClickListener {
             findNavController().navigate(R.id.action_profileFragment_to_locationsFragment)
         }
@@ -49,6 +59,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { viewModel.user.collect(::renderUser) }
                 launch { viewModel.loggedOut.collect { if (it) goToAuthentication() } }
+                launch { viewModel.currencyUpdateError.collect(::showCurrencyUpdateError) }
             }
         }
     }
@@ -60,6 +71,13 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         binding.textRole.setText(
             if (user.role == UserRole.ADMIN) R.string.profile_role_admin else R.string.profile_role_user
         )
+        // false — postavlja tekst bez ponovnog filtriranja padajuce liste.
+        binding.editCurrency.setText(user.currency, false)
+    }
+
+    private fun showCurrencyUpdateError(message: String?) {
+        message ?: return
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
     }
 
     // BR-005 — posle odjave povratno dugme ne vraca u aplikaciju.

@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import rs.homeinventory.app.data.local.HomeInventoryDatabase
 import rs.homeinventory.app.data.local.dao.CategoryDao
+import rs.homeinventory.app.data.local.dao.ExchangeRateDao
 import rs.homeinventory.app.data.local.dao.ItemDao
 import rs.homeinventory.app.data.local.dao.LocationDao
 import rs.homeinventory.app.data.local.dao.UserDao
@@ -35,4 +36,7 @@ object DatabaseModule {
 
     @Provides
     fun itemDao(database: HomeInventoryDatabase): ItemDao = database.itemDao()
+
+    @Provides
+    fun exchangeRateDao(database: HomeInventoryDatabase): ExchangeRateDao = database.exchangeRateDao()
 }

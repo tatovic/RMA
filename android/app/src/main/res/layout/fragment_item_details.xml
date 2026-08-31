@@ -109,6 +109,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/auth_field_spacing" />
 
+            <!-- US-15/BR-013 — vidljivo samo kad se valuta predmeta razlikuje od valute prikaza (tiket 21). -->
+            <include
+                android:id="@+id/rowConvertedValue"
+                layout="@layout/item_detail_field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/auth_field_spacing" />
+
             <include
                 android:id="@+id/rowPurchaseDate"
                 layout="@layout/item_detail_field"

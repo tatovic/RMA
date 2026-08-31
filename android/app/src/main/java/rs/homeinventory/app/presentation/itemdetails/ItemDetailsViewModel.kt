@@ -8,12 +8,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import rs.homeinventory.app.data.local.dao.ItemDetailsRow
+import rs.homeinventory.app.data.local.dao.effectiveValueMinor
 import rs.homeinventory.app.data.remote.mapper.DateMapper
+import rs.homeinventory.app.data.repository.AuthRepository
+import rs.homeinventory.app.data.repository.CurrencyRepository
 import rs.homeinventory.app.data.repository.ItemRepository
+import rs.homeinventory.app.domain.util.CurrencyConverter
 import rs.homeinventory.app.domain.util.MoneyFormatter
 import rs.homeinventory.app.util.ErrorCode
 import rs.homeinventory.app.util.ErrorMessageProvider
@@ -26,6 +31,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ItemDetailsViewModel @Inject constructor(
     private val itemRepository: ItemRepository,
+    private val currencyRepository: CurrencyRepository,
+    private val authRepository: AuthRepository,
     private val errorMessageProvider: ErrorMessageProvider,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -34,10 +41,25 @@ class ItemDetailsViewModel @Inject constructor(
 
     private val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.")
 
+    // US-15/FR-063 — kursevi za konverziju prikazanog iznosa (BR-013 ako neki kurs nedostaje).
+    private val rates = MutableStateFlow<Map<String, Double>>(emptyMap())
+
+    init {
+        viewModelScope.launch {
+            val result = currencyRepository.getRates()
+            if (result is Resource.Success) rates.value = result.data
+        }
+    }
+
     // Nepostojeci ili obrisan identifikator (BR-007) prikazuje poruku umesto rusenja aplikacije.
-    val state: StateFlow<UiState<ItemDetailsUi>> = itemRepository.observeItemDetails(itemId)
-        .map { row -> row?.let { UiState.Success(toUi(it)) } ?: UiState.Error(errorMessageProvider.message(ErrorCode.NOT_FOUND)) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Loading)
+    val state: StateFlow<UiState<ItemDetailsUi>> = combine(
+        itemRepository.observeItemDetails(itemId),
+        authRepository.currentUser.filterNotNull(),
+        rates
+    ) { row, user, currentRates ->
+        row?.let { UiState.Success(toUi(it, user.currency, currentRates)) }
+            ?: UiState.Error(errorMessageProvider.message(ErrorCode.NOT_FOUND))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Loading)
 
     private val _deleteState = MutableStateFlow<Resource<Unit>?>(null)
     val deleteState: StateFlow<Resource<Unit>?> = _deleteState.asStateFlow()
@@ -52,21 +74,34 @@ class ItemDetailsViewModel @Inject constructor(
         }
     }
 
-    private fun toUi(row: ItemDetailsRow): ItemDetailsUi = ItemDetailsUi(
-        name = row.name,
-        categoryName = row.categoryName,
-        locationName = row.locationName,
-        description = row.description,
-        manufacturer = row.manufacturer,
-        model = row.model,
-        serialNumber = row.serialNumber,
-        quantity = row.quantity,
-        purchasePriceFormatted = row.purchasePrice?.let { MoneyFormatter.format(it, row.currency) },
-        estimatedValueFormatted = row.estimatedValue?.let { MoneyFormatter.format(it, row.currency) },
-        purchaseDateFormatted = DateMapper.parseLocalDate(row.purchaseDate)?.format(dateFormatter),
-        warrantyExpirationDateFormatted = DateMapper.parseLocalDate(row.warrantyExpirationDate)?.format(dateFormatter),
-        seller = row.seller,
-        notes = row.notes,
-        imagePath = row.imagePath
-    )
+    // US-15 — predmet cija se valuta razlikuje od valute prikaza pokazuje i preracunati iznos;
+    // BR-013 — ako kurs nedostaje, izdvaja se poruka umesto pogresnog broja.
+    private fun toUi(row: ItemDetailsRow, displayCurrency: String, rates: Map<String, Double>): ItemDetailsUi {
+        val showsConversion = row.currency != displayCurrency
+        val convertedValueMinor = if (showsConversion) {
+            CurrencyConverter.convert(row.effectiveValueMinor(), row.currency, displayCurrency, rates)
+        } else {
+            null
+        }
+
+        return ItemDetailsUi(
+            name = row.name,
+            categoryName = row.categoryName,
+            locationName = row.locationName,
+            description = row.description,
+            manufacturer = row.manufacturer,
+            model = row.model,
+            serialNumber = row.serialNumber,
+            quantity = row.quantity,
+            purchasePriceFormatted = row.purchasePrice?.let { MoneyFormatter.format(it, row.currency) },
+            estimatedValueFormatted = row.estimatedValue?.let { MoneyFormatter.format(it, row.currency) },
+            purchaseDateFormatted = DateMapper.parseLocalDate(row.purchaseDate)?.format(dateFormatter),
+            warrantyExpirationDateFormatted = DateMapper.parseLocalDate(row.warrantyExpirationDate)?.format(dateFormatter),
+            seller = row.seller,
+            notes = row.notes,
+            imagePath = row.imagePath,
+            convertedValueFormatted = convertedValueMinor?.let { MoneyFormatter.format(it, displayCurrency) },
+            convertedValueUnavailable = showsConversion && convertedValueMinor == null
+        )
+    }
 }

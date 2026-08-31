@@ -779,7 +779,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 18 | Fotografije predmeta | 4 | [x] | 2026-08-31 | 4199e86 | ručno provereno na emulatoru (Pixel6_API36): fotografija iz galerije (sistemski Photo Picker) i kamerom (FR-081), smanjenje na 1080px duže stranice i kompresija (FR-082, potvrđeno 1080×2400→486×1080), fajl u privatnom skladištu aplikacije preživljava restart aplikacije, prikaz na listi i detaljima, zamena i brisanje predmeta uklanjaju fajl sa diska (posle isteka opoziva od 5s da se ne pokvari FR-027), predmet bez fotografije i dalje prikazuje ikonicu kategorije, odbijena dozvola za kameru daje poruku bez rušenja; u toku ručne provere pronađen i ispravljen bag (nedostajao mkdirs() pre prvog upisa fotografije, izazivao rušenje) |
 | 19 | Pretraga inventara | 5 | [x] | 2026-08-31 | 4438523 | ručno provereno na emulatoru (Pixel6_API36): polje vidljivo na ekranu, upit "frizider" (bez dijakritike) nalazi "Frižider" iz demo podataka, pretraga po lokaciji ("kuhinja" vraća sve iz Kuhinje), prazan rezultat sa porukom "Nema rezultata za sporet", pojam preživljava rotaciju ekrana, X ikonica brzo briše upit i vraća punu listu (potvrđeno posle ponovljene provere — prvi pokušaji su lažno negativni zbog adb touch-injection flakiness, ne bag u aplikaciji); connectedDebugAndroidTest (ItemDaoTest, 6/6) na istom uređaju pokriva svih šest polja i dijakritike |
 | 20 | Filteri i sortiranje | 5 | [x] | 2026-08-31 | 1069139 | ručno provereno na emulatoru (Pixel6_API36): panel filtera/sortiranja, kombinacija kategorija+godina daje tačan podskup i značku „2", prazna kombinacija filtera prikazuje poruku umesto prazne liste, „Poništi sve filtere", svih šest sortiranja (cena van valute prikaza ide na kraj liste, BR-009), sortiranje preživelo restart aplikacije (DataStore), filteri+sortiranje+značka preživeli rotaciju, pretraga+filteri rade logičkim I. Usput otkriven i korisniku prijavljen poseban bug van obima ovog tiketa: search/filter red je delimično ispod statusne trake na Pixel 6 (nema WindowInsets rukovanja nigde u appu) |
-| 21 | Kursna lista i valuta prikaza | 6 | [ ] | | | |
+| 21 | Kursna lista i valuta prikaza | 6 | [x] | 2026-08-31 | | ručno provereno na emulatoru (Pixel6_API36) uz pravi backend i pravi open.er-api.com: promena valute u Profilu (RSD→EUR) odmah preračunala Dashboard ukupnu vrednost (5.436.012,83 RSD → 46.334,22 EUR, tačan kurs), detalji predmeta u RSD prikazuju tačan preračunati iznos (BR-011), Room `exchange_rates` sadrži tačno šest keširanih valuta (BR-012). TTL-preskakanje mreže i offline pad na keš provereni kroz implementaciju, ne uživo (mreža nije isključivana u ovoj sesiji) |
 | 22 | Praćenje garancija | 6 | [ ] | | | |
 | 23 | Statistika sa grafikonima | 6 | [ ] | | | |
 | 24 | Administratorski deo API-ja | 7 | [ ] | | | |
@@ -787,7 +787,7 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 26 | Puna sinhronizacija i offline rad | 7 | [ ] | | | |
 | 27 | Poliranje i provera projektnih zahteva | 7 | [ ] | | | |
 
-**Napredak: 20 / 27**
+**Napredak: 21 / 27**
 
 Agent koji završi tiket ažurira i ovaj brojač.
 

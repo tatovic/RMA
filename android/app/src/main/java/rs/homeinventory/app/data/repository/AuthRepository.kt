@@ -10,6 +10,7 @@ import rs.homeinventory.app.data.remote.api.BackendApi
 import rs.homeinventory.app.data.remote.dto.AuthResponseDto
 import rs.homeinventory.app.data.remote.dto.LoginRequestDto
 import rs.homeinventory.app.data.remote.dto.RegisterRequestDto
+import rs.homeinventory.app.data.remote.dto.UpdateUserRequestDto
 import rs.homeinventory.app.data.remote.mapper.toDomain
 import rs.homeinventory.app.data.remote.mapper.toEntity
 import rs.homeinventory.app.domain.model.User
@@ -46,6 +47,18 @@ class AuthRepository @Inject constructor(
         prefs.clearSession()
         database.clearAllData()
     }
+
+    // US-15/BR-012 — valuta prikaza se bira u Profilu iz zatvorene liste od sest podrzanih valuta.
+    suspend fun updateCurrency(currency: String): Resource<User> =
+        when (val result = safeApiCall(errorMessageProvider) { api.updateMe(UpdateUserRequestDto(currency = currency)) }) {
+            is Resource.Success -> {
+                val entity = result.data.toEntity()
+                userDao.upsert(entity)
+                Resource.Success(entity.toDomain())
+            }
+            is Resource.Error -> result
+            Resource.Loading -> Resource.Loading
+        }
 
     private suspend fun authenticate(call: suspend () -> Response<AuthResponseDto>): Resource<User> =
         when (val result = safeApiCall(errorMessageProvider, call)) {

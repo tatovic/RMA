@@ -98,6 +98,10 @@ class ItemDetailsFragment : Fragment(R.layout.fragment_item_details) {
         bindField(binding.rowQuantity, R.string.additem_label_quantity, item.quantity.toString())
         bindField(binding.rowPurchasePrice, R.string.additem_label_purchase_price, item.purchasePriceFormatted)
         bindField(binding.rowEstimatedValue, R.string.additem_label_estimated_value, item.estimatedValueFormatted)
+        // US-15/BR-013 — konverzija u valutu prikaza, ili poruka ako kurs nije dostupan.
+        val convertedValueText = item.convertedValueFormatted
+            ?: if (item.convertedValueUnavailable) getString(R.string.error_currency_unavailable) else null
+        bindField(binding.rowConvertedValue, R.string.itemdetails_label_converted_value, convertedValueText)
         bindField(binding.rowPurchaseDate, R.string.additem_label_purchase_date, item.purchaseDateFormatted)
         bindField(
             binding.rowWarrantyDate,
