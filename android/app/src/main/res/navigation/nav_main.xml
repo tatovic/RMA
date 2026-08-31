@@ -57,6 +57,6 @@
         android:id="@+id/locationsFragment"
         android:name="rs.homeinventory.app.presentation.locations.LocationsFragment"
         android:label="@string/nav_locations"
-        tools:layout="@layout/fragment_placeholder" />
+        tools:layout="@layout/fragment_locations" />
 
 </navigation>

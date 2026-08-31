@@ -11,16 +11,20 @@ import rs.homeinventory.app.data.local.dao.ItemDao
 import rs.homeinventory.app.data.local.dao.ItemDetailsRow
 import rs.homeinventory.app.data.local.dao.ItemListRow
 import rs.homeinventory.app.data.local.dao.LocationDao
+import rs.homeinventory.app.data.local.dao.LocationWithCount
 import rs.homeinventory.app.data.local.entity.CategoryEntity
 import rs.homeinventory.app.data.local.entity.InventoryItemEntity
 import rs.homeinventory.app.data.local.entity.LocationEntity
 import rs.homeinventory.app.data.remote.api.BackendApi
 import rs.homeinventory.app.data.remote.dto.ItemDto
+import rs.homeinventory.app.data.remote.dto.LocationDto
+import rs.homeinventory.app.data.remote.dto.LocationRequestDto
 import rs.homeinventory.app.data.remote.mapper.toDto
 import rs.homeinventory.app.data.remote.mapper.toEntity
 import rs.homeinventory.app.util.ErrorMessageProvider
 import rs.homeinventory.app.util.Resource
 import rs.homeinventory.app.util.safeApiCall
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -47,6 +51,10 @@ class ItemRepository @Inject constructor(
     fun observeCategories(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
 
     fun observeLocations(userId: String): Flow<List<LocationEntity>> = locationDao.observeAll(userId)
+
+    // SCR-10 — spisak lokacija sa brojem predmeta uz svaku (tiket 17).
+    fun observeLocationsWithCount(userId: String): Flow<List<LocationWithCount>> =
+        locationDao.observeAllWithItemCount(userId)
 
     suspend fun getItem(id: String): InventoryItemEntity? = itemDao.getById(id)
 
@@ -79,6 +87,42 @@ class ItemRepository @Inject constructor(
         val result = safeApiCall(errorMessageProvider, call)
         if (result is Resource.Success) {
             itemDao.upsert(result.data.toEntity(keepImagePath = entity.imagePath, syncStatus = SyncStatus.SYNCED))
+        }
+    }
+
+    // SCR-10 — CRUD lokacija (tiket 17). Za razliku od predmeta ovo je mreza-prvo: naziv mora
+    // odmah biti proveren kod servera (VR-19), pa se Room azurira tek posle uspesnog odgovora.
+    suspend fun createLocation(name: String, description: String?): Resource<Unit> = withContext(Dispatchers.IO) {
+        val dto = LocationRequestDto(id = UUID.randomUUID().toString(), name = name, description = description)
+        toUnitResource(safeApiCall(errorMessageProvider) { api.createLocation(dto) })
+    }
+
+    suspend fun updateLocation(id: String, name: String, description: String?): Resource<Unit> =
+        withContext(Dispatchers.IO) {
+            val dto = LocationRequestDto(name = name, description = description)
+            toUnitResource(safeApiCall(errorMessageProvider) { api.updateLocation(id, dto) })
+        }
+
+    private suspend fun toUnitResource(result: Resource<LocationDto>): Resource<Unit> =
+        when (result) {
+            is Resource.Success -> {
+                locationDao.upsert(result.data.toEntity())
+                Resource.Success(Unit)
+            }
+            is Resource.Error -> Resource.Error(result.code, result.message)
+            Resource.Loading -> Resource.Loading
+        }
+
+    // BR-014 se proverava na ekranu (broj predmeta vec je prikazan uz lokaciju) pre ovog poziva;
+    // server je konacna potvrda za slucaj trke izmedju uredjaja.
+    suspend fun deleteLocation(id: String): Resource<Unit> = withContext(Dispatchers.IO) {
+        when (val result = safeApiCall(errorMessageProvider) { api.deleteLocation(id) }) {
+            is Resource.Success -> {
+                locationDao.hardDelete(id)
+                Resource.Success(Unit)
+            }
+            is Resource.Error -> Resource.Error(result.code, result.message)
+            Resource.Loading -> Resource.Loading
         }
     }
 

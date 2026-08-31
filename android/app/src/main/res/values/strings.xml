@@ -132,4 +132,32 @@
     <string name="itemdetails_delete_dialog_cancel">Otkaži</string>
     <string name="itemdetails_delete_confirmation">Predmet je obrisan.</string>
     <string name="itemdetails_delete_undo">Opozovi</string>
+
+    <!-- Klijentska validacija forme lokacije — prd.md sekcija 9, VR-19 (tiket 17). -->
+    <string name="error_vr_location_name">Naziv mora imati između 1 i 60 znakova</string>
+    <string name="error_vr_location_description">Opis može imati najviše 255 znakova</string>
+
+    <!-- SCR-10 Lokacije — tiket 17. -->
+    <string name="locations_empty_title">Nemate dodatih lokacija</string>
+    <string name="locations_empty_message">Dodajte prostorije svog doma, npr. dnevnu sobu ili garažu, da biste mogli da smestite predmete u njih.</string>
+    <string name="locations_empty_action">Dodaj lokaciju</string>
+    <string name="locations_item_count_zero">Nema predmeta</string>
+    <string name="locations_item_count_one">1 predmet</string>
+    <string name="locations_item_count_many">%1$d predmeta</string>
+    <string name="locations_action_edit">Izmeni</string>
+    <string name="locations_action_delete">Obriši</string>
+    <string name="locations_dialog_add_title">Nova lokacija</string>
+    <string name="locations_dialog_edit_title">Izmena lokacije</string>
+    <string name="locations_dialog_save">Sačuvaj</string>
+    <string name="locations_dialog_cancel">Otkaži</string>
+    <string name="locations_label_name">Naziv</string>
+    <string name="locations_label_description">Opis (opciono)</string>
+    <string name="locations_delete_dialog_title">Brisanje lokacije</string>
+    <string name="locations_delete_dialog_message">Da li ste sigurni da želite da obrišete „%1$s"?</string>
+    <string name="locations_delete_dialog_confirm">Obriši</string>
+    <string name="locations_delete_dialog_cancel">Otkaži</string>
+    <string name="locations_delete_confirmation">Lokacija je obrisana.</string>
+    <string name="locations_delete_blocked_title">Brisanje nije moguće</string>
+    <string name="locations_delete_blocked_message">Lokacija „%1$s" se koristi kod %2$d predmeta i ne može se obrisati. Prvo premestite ili obrišite te predmete.</string>
+    <string name="locations_delete_blocked_confirm">Razumem</string>
 </resources>
