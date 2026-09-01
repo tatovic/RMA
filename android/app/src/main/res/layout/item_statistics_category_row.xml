@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Red tabele Kategorija | Broj predmeta | Ukupna vrednost na SCR-08 (tiket 23, prd.md sekcija 6). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="@dimen/auth_field_spacing">
+
+    <TextView
+        android:id="@+id/textCategoryName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        tools:text="Elektronika" />
+
+    <TextView
+        android:id="@+id/textCategoryCount"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="end"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        tools:text="18" />
+
+    <TextView
+        android:id="@+id/textCategoryValue"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/auth_field_spacing"
+        android:layout_weight="2"
+        android:gravity="end"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        tools:text="245.000,00 RSD" />
+
+</LinearLayout>

@@ -88,6 +88,25 @@
     <string name="dashboard_warranty_warnings_title">Upozorenja o garanciji</string>
     <string name="dashboard_warranty_warning">Garancija za %1$s ističe za %2$d dana</string>
 
+    <!-- SCR-08 Statistika — tiket 23. -->
+    <string name="statistics_total_items_label">Ukupno predmeta</string>
+    <string name="statistics_total_value_label">Ukupna vrednost</string>
+    <string name="statistics_category_count_label">Kategorija u upotrebi</string>
+    <string name="statistics_average_value_label">Prosečna vrednost</string>
+    <string name="statistics_unconverted_row">Kurs za %1$s trenutno nije dostupan — %2$s nije uračunato u zbir.</string>
+    <string name="statistics_value_by_category_title">Vrednost po kategorijama</string>
+    <string name="statistics_count_by_category_title">Broj predmeta po kategorijama</string>
+    <string name="statistics_category_table_title">Pregled po kategorijama</string>
+    <string name="statistics_table_header_category">Kategorija</string>
+    <string name="statistics_table_header_count">Broj</string>
+    <string name="statistics_table_header_value">Vrednost</string>
+    <string name="statistics_most_expensive_title">Najskuplji predmet</string>
+    <string name="statistics_most_expensive_item">%1$s — %2$s — %3$s</string>
+    <string name="statistics_most_expensive_none">Nema predmeta koji se može prikazati u valuti prikaza.</string>
+    <string name="statistics_warranty_breakdown_title">Raspodela po statusu garancije</string>
+    <string name="statistics_empty_title">Nema podataka za statistiku</string>
+    <string name="statistics_empty_message">Još uvek nemate dodatih predmeta. Dodajte prvi predmet da biste videli statistiku.</string>
+
     <!-- SCR-04 Inventar — tiket 14. -->
     <string name="inventory_item_subtitle">%1$s • %2$s</string>
     <string name="inventory_empty_title">Inventar je prazan</string>

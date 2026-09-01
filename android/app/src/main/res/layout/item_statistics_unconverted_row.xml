@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Red za valutu bez dostupnog kursa na SCR-08 (BR-013, tiket 23) — iznos prikazan odvojeno umesto tihog pogresnog sabiranja. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/textUnconvertedRow"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="@dimen/auth_field_spacing"
+    android:textAppearance="?attr/textAppearanceBodyMedium"
+    android:textColor="?attr/colorError"
+    tools:text="Kurs za USD trenutno nije dostupan — 3.500,00 USD nije uračunato u zbir." />

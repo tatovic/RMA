@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Red raspodele po statusu garancije na SCR-08 (BR-010, tiket 23). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingVertical="@dimen/auth_field_spacing">
+
+    <View
+        android:id="@+id/dotWarrantyStatus"
+        android:layout_width="@dimen/warranty_status_dot_size"
+        android:layout_height="@dimen/warranty_status_dot_size"
+        android:layout_marginEnd="@dimen/warranty_status_dot_spacing"
+        android:background="@drawable/bg_status_dot"
+        tools:backgroundTint="@color/warranty_status_active" />
+
+    <TextView
+        android:id="@+id/textWarrantyStatusLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        tools:text="Aktivna" />
+
+    <TextView
+        android:id="@+id/textWarrantyStatusCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        tools:text="12" />
+
+</LinearLayout>

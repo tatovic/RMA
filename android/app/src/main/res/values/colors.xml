@@ -17,4 +17,18 @@
     <color name="warranty_status_expiring_soon">#EF6C00</color>
     <color name="warranty_status_expired">#BA1A1A</color>
     <color name="warranty_status_unknown">#79747E</color>
+
+    <!-- Paleta za pie/bar chart po kategoriji (tiket 23) — deljena, ista kategorija = ista boja na
+         oba grafikona; dovoljno zasicene da ostanu citljive i na tamnoj i na svetloj pozadini. -->
+    <color name="chart_category_1">#3D5AFE</color>
+    <color name="chart_category_2">#00BFA5</color>
+    <color name="chart_category_3">#FF6D00</color>
+    <color name="chart_category_4">#D500F9</color>
+    <color name="chart_category_5">#FFC400</color>
+    <color name="chart_category_6">#00B8D4</color>
+    <color name="chart_category_7">#C51162</color>
+    <color name="chart_category_8">#64DD17</color>
+    <color name="chart_category_9">#6200EA</color>
+    <color name="chart_category_10">#DD2C00</color>
+    <color name="chart_category_11">#2962FF</color>
 </resources>
