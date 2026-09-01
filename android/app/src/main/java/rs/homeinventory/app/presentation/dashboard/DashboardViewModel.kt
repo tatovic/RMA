@@ -15,19 +15,25 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDate
 import kotlinx.coroutines.launch
 import rs.homeinventory.app.data.local.dao.CategoryAggregate
 import rs.homeinventory.app.data.local.dao.ItemListRow
 import rs.homeinventory.app.data.local.dao.effectiveValueMinor
+import rs.homeinventory.app.data.local.prefs.WarrantyPreferences
+import rs.homeinventory.app.data.remote.mapper.DateMapper
 import rs.homeinventory.app.data.repository.AuthRepository
 import rs.homeinventory.app.data.repository.CurrencyRepository
 import rs.homeinventory.app.data.repository.ItemRepository
 import rs.homeinventory.app.domain.model.User
+import rs.homeinventory.app.domain.model.WarrantyStatus
 import rs.homeinventory.app.domain.util.CurrencyConverter
 import rs.homeinventory.app.domain.util.MoneyFormatter
+import rs.homeinventory.app.domain.util.WarrantyCalculator
 import rs.homeinventory.app.util.DASHBOARD_RECENT_ITEMS_LIMIT
 import rs.homeinventory.app.util.Resource
 import rs.homeinventory.app.util.UiState
+import rs.homeinventory.app.util.WARRANTY_THRESHOLD_DEFAULT_DAYS
 import javax.inject.Inject
 
 // SCR-03 — ekran cita iskljucivo iz Room-a, mreza samo puni bazu (tech.md sekcija 5.3, DEP-02).
@@ -36,6 +42,7 @@ import javax.inject.Inject
 class DashboardViewModel @Inject constructor(
     private val itemRepository: ItemRepository,
     private val currencyRepository: CurrencyRepository,
+    private val warrantyPreferences: WarrantyPreferences,
     authRepository: AuthRepository
 ) : ViewModel() {
 
@@ -50,6 +57,15 @@ class DashboardViewModel @Inject constructor(
     private val recentItems: StateFlow<List<ItemListRow>> = currentUser
         .flatMapLatest { itemRepository.observeRecentItems(it.id, DASHBOARD_RECENT_ITEMS_LIMIT) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    // FR-053 — kartica upozorenja treba SVE predmete, ne samo poslednjih pet kao recentItems.
+    private val allItems: StateFlow<List<ItemListRow>> = currentUser
+        .flatMapLatest { itemRepository.observeAllItems(it.id) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    // FR-051/FR-052 — prag garancije korisnika, isti izvor kao u listi inventara (tiket 22).
+    private val warrantyThreshold: StateFlow<Int> = warrantyPreferences.thresholdDays
+        .stateIn(viewModelScope, SharingStarted.Eagerly, WARRANTY_THRESHOLD_DEFAULT_DAYS)
 
     private val refreshPhase = MutableStateFlow<RefreshPhase>(RefreshPhase.Loading)
 
@@ -66,9 +82,11 @@ class DashboardViewModel @Inject constructor(
     val snackbarMessage: SharedFlow<String> = _snackbarMessage.asSharedFlow()
 
     val state: StateFlow<UiState<DashboardUi>> = combine(
-        currentUser, aggregates, recentItems, refreshPhase, rates
-    ) { user, categoryAggregates, recent, phase, currentRates ->
-        toUiState(user, categoryAggregates, recent, phase, currentRates)
+        combine(currentUser, aggregates, recentItems, refreshPhase, rates, ::BaseSnapshot),
+        allItems,
+        warrantyThreshold
+    ) { base, items, threshold ->
+        toUiState(base.user, base.aggregates, base.recent, base.phase, base.rates, items, threshold)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Loading)
 
     init {
@@ -98,9 +116,11 @@ class DashboardViewModel @Inject constructor(
         aggregates: List<CategoryAggregate>,
         recent: List<ItemListRow>,
         phase: RefreshPhase,
-        rates: Map<String, Double>
+        rates: Map<String, Double>,
+        items: List<ItemListRow>,
+        warrantyThresholdDays: Int
     ): UiState<DashboardUi> = when {
-        aggregates.isNotEmpty() -> UiState.Success(buildDashboardUi(user, aggregates, recent, rates))
+        aggregates.isNotEmpty() -> UiState.Success(buildDashboardUi(user, aggregates, recent, rates, items, warrantyThresholdDays))
         phase is RefreshPhase.Loading -> UiState.Loading
         phase is RefreshPhase.Failed -> UiState.Error(phase.message)
         else -> UiState.Empty
@@ -112,7 +132,9 @@ class DashboardViewModel @Inject constructor(
         user: User,
         aggregates: List<CategoryAggregate>,
         recent: List<ItemListRow>,
-        rates: Map<String, Double>
+        rates: Map<String, Double>,
+        items: List<ItemListRow>,
+        warrantyThresholdDays: Int
     ): DashboardUi {
         val totalItemCount = aggregates.sumOf { it.itemCount }
         val valueByCurrency = aggregates.groupBy { it.currency }
@@ -144,9 +166,35 @@ class DashboardViewModel @Inject constructor(
             totalValueFormatted = MoneyFormatter.format(totalValueMinor, user.currency),
             hasUnconvertedCurrencies = hasUnconvertedCurrencies,
             categoryCounts = categoryCounts,
-            recentItems = recentUi
+            recentItems = recentUi,
+            warrantyWarnings = buildWarrantyWarnings(items, warrantyThresholdDays)
         )
     }
+
+    // FR-053/FR-054 — samo predmeti cija garancija USKORO_ISTICE (BR-010), sortirano po hitnosti
+    // (najmanje dana prvo); predmet bez datuma garancije se ovde nikad ne pojavljuje.
+    private fun buildWarrantyWarnings(items: List<ItemListRow>, thresholdDays: Int): List<WarrantyWarningUi> {
+        val today = LocalDate.now()
+        return items.mapNotNull { row ->
+            val expiration = DateMapper.parseLocalDate(row.warrantyExpirationDate) ?: return@mapNotNull null
+            if (WarrantyCalculator.status(expiration, thresholdDays, today) != WarrantyStatus.USKORO_ISTICE) {
+                return@mapNotNull null
+            }
+            WarrantyWarningUi(
+                id = row.id,
+                itemName = row.name,
+                daysRemaining = WarrantyCalculator.daysRemaining(expiration, today).toInt()
+            )
+        }.sortedBy { it.daysRemaining }
+    }
+
+    private data class BaseSnapshot(
+        val user: User,
+        val aggregates: List<CategoryAggregate>,
+        val recent: List<ItemListRow>,
+        val phase: RefreshPhase,
+        val rates: Map<String, Double>
+    )
 
     private sealed interface RefreshPhase {
         data object Loading : RefreshPhase

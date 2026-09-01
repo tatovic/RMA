@@ -11,4 +11,10 @@
     <color name="md_theme_dark_onSurface">#E3E2E9</color>
     <color name="md_theme_dark_error">#FFB4AB</color>
     <color name="md_theme_dark_onError">#690005</color>
+
+    <!-- BR-010 — boje po statusu garancije (tiket 22), posvetljene za kontrast na tamnoj pozadini. -->
+    <color name="warranty_status_active">#81C995</color>
+    <color name="warranty_status_expiring_soon">#FFB74D</color>
+    <color name="warranty_status_expired">#FFB4AB</color>
+    <color name="warranty_status_unknown">#C4C6D0</color>
 </resources>

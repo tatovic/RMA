@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Red kartice upozorenja o garanciji na SCR-03 — FR-053/FR-054 (tiket 22). -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/textWarningMessage"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="@dimen/auth_field_spacing"
+    android:textAppearance="?attr/textAppearanceBodyLarge"
+    android:textColor="@color/warranty_status_expiring_soon"
+    tools:text="Garancija za Samsung TV ističe za 15 dana" />

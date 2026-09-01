@@ -13,4 +13,6 @@
     <dimen name="inventory_filter_button_size">48dp</dimen>
     <dimen name="inventory_filter_button_padding">12dp</dimen>
     <dimen name="inventory_filter_badge_size">18dp</dimen>
+    <dimen name="warranty_status_dot_size">10dp</dimen>
+    <dimen name="warranty_status_dot_spacing">6dp</dimen>
 </resources>

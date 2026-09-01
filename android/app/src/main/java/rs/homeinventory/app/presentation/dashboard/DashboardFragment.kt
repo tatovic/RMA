@@ -17,6 +17,7 @@ import rs.homeinventory.app.R
 import rs.homeinventory.app.databinding.FragmentDashboardBinding
 import rs.homeinventory.app.databinding.ItemDashboardCategoryBinding
 import rs.homeinventory.app.databinding.ItemDashboardRecentBinding
+import rs.homeinventory.app.databinding.ItemDashboardWarrantyWarningBinding
 import rs.homeinventory.app.util.UiState
 
 // SCR-03 — jedini izvor podataka za ekran je Room (tech.md sekcija 5.3); cetiri stanja po BR-017.
@@ -67,6 +68,20 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         binding.textTotalItemsValue.text = data.totalItemCount.toString()
         binding.textTotalValue.text = data.totalValueFormatted
         binding.textUnconvertedNote.isVisible = data.hasUnconvertedCurrencies
+
+        // FR-053/FR-054 — kartica se sakriva potpuno kad nema upozorenja.
+        val hasWarnings = data.warrantyWarnings.isNotEmpty()
+        binding.textWarrantyWarningsTitle.isVisible = hasWarnings
+        binding.containerWarrantyWarnings.isVisible = hasWarnings
+        binding.containerWarrantyWarnings.removeAllViews()
+        data.warrantyWarnings.forEach { warning ->
+            val row = ItemDashboardWarrantyWarningBinding.inflate(
+                LayoutInflater.from(requireContext()), binding.containerWarrantyWarnings, false
+            )
+            row.textWarningMessage.text =
+                getString(R.string.dashboard_warranty_warning, warning.itemName, warning.daysRemaining)
+            binding.containerWarrantyWarnings.addView(row.root)
+        }
 
         binding.containerCategoryBreakdown.removeAllViews()
         data.categoryCounts.forEach { category ->

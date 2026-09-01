@@ -131,6 +131,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/auth_field_spacing" />
 
+            <!-- BR-010 — status garancije i preostali broj dana, uvek izvedeno (tiket 22). -->
+            <include
+                android:id="@+id/rowWarrantyStatus"
+                layout="@layout/item_detail_field"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/auth_field_spacing" />
+
             <include
                 android:id="@+id/rowSeller"
                 layout="@layout/item_detail_field"

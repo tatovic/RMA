@@ -60,6 +60,25 @@
             android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- FR-051/FR-052 — prag za upozorenje o garanciji (tiket 22). -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/layoutWarrantyThreshold"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/auth_field_spacing"
+        android:hint="@string/profile_label_warranty_threshold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layoutCurrency">
+
+        <AutoCompleteTextView
+            android:id="@+id/editWarrantyThreshold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none" />
+    </com.google.android.material.textfield.TextInputLayout>
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonLocations"
         style="@style/Widget.Material3.Button.OutlinedButton"
@@ -69,7 +88,7 @@
         android:text="@string/nav_locations"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layoutCurrency" />
+        app:layout_constraintTop_toBottomOf="@id/layoutWarrantyThreshold" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonLogout"

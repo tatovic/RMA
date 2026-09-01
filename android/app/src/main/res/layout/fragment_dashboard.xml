@@ -77,6 +77,26 @@
                     android:visibility="gone"
                     tools:visibility="visible" />
 
+                <!-- FR-053/FR-054 — kartica upozorenja o garanciji, sakrivena kad nema upozorenja (tiket 22). -->
+                <TextView
+                    android:id="@+id/textWarrantyWarningsTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/auth_section_spacing"
+                    android:text="@string/dashboard_warranty_warnings_title"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <LinearLayout
+                    android:id="@+id/containerWarrantyWarnings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/auth_field_spacing"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

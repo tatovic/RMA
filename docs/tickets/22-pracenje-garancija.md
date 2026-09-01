@@ -4,18 +4,18 @@
 
 **Blocked by:** 21 — Kursna lista i valuta prikaza.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Status garancije se računa iz datuma isteka po pravilu BR-010, u sva četiri slučaja
-- [ ] Poređenje je isključivo po kalendarskom datumu, bez vremena i vremenske zone
-- [ ] Datum isteka na današnji dan znači da garancija uskoro ističe, ne da je istekla
-- [ ] Status se nigde ne čuva u bazi, nego se uvek izvodi (db.md sekcija 2.4)
-- [ ] Korisnik bira prag u profilu: 7, 30, 60 ili 90 dana, podrazumevano 30 (FR-051)
-- [ ] Izbor praga se pamti između pokretanja i odmah menja prikaz
-- [ ] Pregled prikazuje karticu upozorenja, sortiranu po hitnosti (FR-053)
-- [ ] Tekst upozorenja je u obliku Garancija za Samsung TV istice za 15 dana (FR-054)
-- [ ] Predmet bez datuma garancije se ne pojavljuje među upozorenjima
-- [ ] Stavka u listi inventara nosi oznaku statusa garancije
-- [ ] Ekran detalja prikazuje status i preostali broj dana
-- [ ] Statusi su razdvojeni bojom po tabeli iz BR-010
-- [ ] Unit testovi pokrivaju sve četiri grane i granične datume
+- [x] Status garancije se računa iz datuma isteka po pravilu BR-010, u sva četiri slučaja
+- [x] Poređenje je isključivo po kalendarskom datumu, bez vremena i vremenske zone
+- [x] Datum isteka na današnji dan znači da garancija uskoro ističe, ne da je istekla
+- [x] Status se nigde ne čuva u bazi, nego se uvek izvodi (db.md sekcija 2.4)
+- [x] Korisnik bira prag u profilu: 7, 30, 60 ili 90 dana, podrazumevano 30 (FR-051)
+- [x] Izbor praga se pamti između pokretanja i odmah menja prikaz
+- [x] Pregled prikazuje karticu upozorenja, sortiranu po hitnosti (FR-053)
+- [x] Tekst upozorenja je u obliku Garancija za Samsung TV istice za 15 dana (FR-054)
+- [x] Predmet bez datuma garancije se ne pojavljuje među upozorenjima
+- [x] Stavka u listi inventara nosi oznaku statusa garancije
+- [x] Ekran detalja prikazuje status i preostali broj dana
+- [x] Statusi su razdvojeni bojom po tabeli iz BR-010
+- [x] Unit testovi pokrivaju sve četiri grane i granične datume

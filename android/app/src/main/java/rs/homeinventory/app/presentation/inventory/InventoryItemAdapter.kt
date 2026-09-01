@@ -2,6 +2,7 @@ package rs.homeinventory.app.presentation.inventory
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -10,6 +11,8 @@ import rs.homeinventory.app.R
 import rs.homeinventory.app.databinding.ItemInventoryBinding
 import rs.homeinventory.app.util.photoFile
 import rs.homeinventory.app.util.resolveCategoryIcon
+import rs.homeinventory.app.util.warrantyStatusColorRes
+import rs.homeinventory.app.util.warrantyStatusLabelRes
 
 // Poredjenje po id-u da lista ne trepe pri osvezavanju (tiket 14); ListAdapter + DiffUtil
 // racunaju razliku na pozadinskoj niti, sto drzi skrolovanje glatkim i na 500 predmeta (NFR-01).
@@ -36,6 +39,13 @@ class InventoryItemAdapter(
             )
             binding.textItemValue.text = item.priceFormatted
             binding.imageItem.contentDescription = item.categoryName
+
+            // FR-055/BR-010 — oznaka statusa garancije, razdvojena bojom (tiket 22).
+            val statusLabel = binding.root.context.getString(warrantyStatusLabelRes(item.warrantyStatus))
+            binding.dotWarrantyStatus.background.mutate().setTint(
+                ContextCompat.getColor(binding.root.context, warrantyStatusColorRes(item.warrantyStatus))
+            )
+            binding.dotWarrantyStatus.contentDescription = statusLabel
 
             // FR-087 — bez fotografije prikazuje se ikonica kategorije umesto prazne povrsine.
             if (item.imagePath != null) {

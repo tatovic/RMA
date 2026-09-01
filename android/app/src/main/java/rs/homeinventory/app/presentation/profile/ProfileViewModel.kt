@@ -9,16 +9,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import rs.homeinventory.app.data.local.prefs.WarrantyPreferences
 import rs.homeinventory.app.data.repository.AuthRepository
 import rs.homeinventory.app.domain.model.User
 import rs.homeinventory.app.util.Resource
 import rs.homeinventory.app.util.SUPPORTED_CURRENCIES
+import rs.homeinventory.app.util.WARRANTY_THRESHOLD_DEFAULT_DAYS
+import rs.homeinventory.app.util.WARRANTY_THRESHOLD_OPTIONS
 import javax.inject.Inject
 
 // SCR-09.
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val warrantyPreferences: WarrantyPreferences
 ) : ViewModel() {
 
     val user: StateFlow<User?> = authRepository.currentUser
@@ -32,6 +36,16 @@ class ProfileViewModel @Inject constructor(
 
     private val _currencyUpdateError = MutableStateFlow<String?>(null)
     val currencyUpdateError: StateFlow<String?> = _currencyUpdateError.asStateFlow()
+
+    // FR-051/FR-052 — prag "garancija uskoro istice", cetiri ponudjene vrednosti, cuva se u DataStore (tiket 22).
+    val warrantyThresholdOptions: List<Int> = WARRANTY_THRESHOLD_OPTIONS
+
+    val warrantyThresholdDays: StateFlow<Int> = warrantyPreferences.thresholdDays
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WARRANTY_THRESHOLD_DEFAULT_DAYS)
+
+    fun updateWarrantyThreshold(days: Int) {
+        viewModelScope.launch { warrantyPreferences.saveThresholdDays(days) }
+    }
 
     // BR-005 — brise token i kompletan sadrzaj lokalne baze.
     fun logout() {

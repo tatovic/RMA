@@ -27,12 +27,29 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/textItemName"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceBodyLarge"
-            tools:text="Samsung TV 55&quot;" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- FR-055/BR-010 — oznaka statusa garancije, razdvojena bojom (tiket 22). -->
+            <View
+                android:id="@+id/dotWarrantyStatus"
+                android:layout_width="@dimen/warranty_status_dot_size"
+                android:layout_height="@dimen/warranty_status_dot_size"
+                android:layout_marginEnd="@dimen/warranty_status_dot_spacing"
+                android:background="@drawable/bg_status_dot"
+                tools:backgroundTint="@color/warranty_status_expiring_soon" />
+
+            <TextView
+                android:id="@+id/textItemName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                tools:text="Samsung TV 55&quot;" />
+
+        </LinearLayout>
 
         <TextView
             android:id="@+id/textItemSubtitle"

@@ -1,5 +1,7 @@
 package rs.homeinventory.app.presentation.itemdetails
 
+import rs.homeinventory.app.domain.model.WarrantyStatus
+
 data class ItemDetailsUi(
     val name: String,
     val categoryName: String,
@@ -18,5 +20,9 @@ data class ItemDetailsUi(
     val imagePath: String?,
     // US-15/BR-013 — vidljivo samo kad se valuta predmeta razlikuje od valute prikaza korisnika.
     val convertedValueFormatted: String?,
-    val convertedValueUnavailable: Boolean
+    val convertedValueUnavailable: Boolean,
+    // BR-010 — status garancije, uvek izveden (tiket 22). Preostali dani su null za ISTEKLA/NEPOZNATO,
+    // gde "preostalo dana" nema smisla.
+    val warrantyStatus: WarrantyStatus,
+    val warrantyDaysRemaining: Int?
 )

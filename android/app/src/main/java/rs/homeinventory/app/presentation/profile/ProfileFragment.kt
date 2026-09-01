@@ -41,6 +41,18 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             viewModel.updateCurrency(viewModel.supportedCurrencies[position])
         }
 
+        // FR-051/FR-052 — izbor praga odmah menja prikaz svuda jer WarrantyPreferences.thresholdDays
+        // se cita reaktivno (tiket 22).
+        val thresholdLabels = viewModel.warrantyThresholdOptions.map {
+            getString(R.string.warranty_threshold_days_format, it)
+        }
+        binding.editWarrantyThreshold.setAdapter(
+            ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, thresholdLabels)
+        )
+        binding.editWarrantyThreshold.setOnItemClickListener { _, _, position, _ ->
+            viewModel.updateWarrantyThreshold(viewModel.warrantyThresholdOptions[position])
+        }
+
         binding.buttonLocations.setOnClickListener {
             findNavController().navigate(R.id.action_profileFragment_to_locationsFragment)
         }
@@ -60,6 +72,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 launch { viewModel.user.collect(::renderUser) }
                 launch { viewModel.loggedOut.collect { if (it) goToAuthentication() } }
                 launch { viewModel.currencyUpdateError.collect(::showCurrencyUpdateError) }
+                launch { viewModel.warrantyThresholdDays.collect(::renderWarrantyThreshold) }
             }
         }
     }
@@ -73,6 +86,11 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         )
         // false — postavlja tekst bez ponovnog filtriranja padajuce liste.
         binding.editCurrency.setText(user.currency, false)
+    }
+
+    // false — postavlja tekst bez ponovnog filtriranja padajuce liste.
+    private fun renderWarrantyThreshold(days: Int) {
+        binding.editWarrantyThreshold.setText(getString(R.string.warranty_threshold_days_format, days), false)
     }
 
     private fun showCurrencyUpdateError(message: String?) {

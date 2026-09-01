@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -22,11 +23,14 @@ import kotlinx.coroutines.launch
 import rs.homeinventory.app.R
 import rs.homeinventory.app.databinding.FragmentItemDetailsBinding
 import rs.homeinventory.app.databinding.ItemDetailFieldBinding
+import rs.homeinventory.app.domain.model.WarrantyStatus
 import rs.homeinventory.app.util.EXTRA_ITEM_DELETED_ID
 import rs.homeinventory.app.util.RESULT_ITEM_SAVED
 import rs.homeinventory.app.util.Resource
 import rs.homeinventory.app.util.UiState
 import rs.homeinventory.app.util.photoFile
+import rs.homeinventory.app.util.warrantyStatusColorRes
+import rs.homeinventory.app.util.warrantyStatusLabelRes
 
 // SCR-07 — detalji predmeta i brisanje (tiket 16). BR-007: ekran prima samo itemId i sam ucitava iz Room-a.
 @AndroidEntryPoint
@@ -108,6 +112,7 @@ class ItemDetailsFragment : Fragment(R.layout.fragment_item_details) {
             R.string.additem_label_warranty_expiration_date,
             item.warrantyExpirationDateFormatted
         )
+        bindWarrantyStatus(binding.rowWarrantyStatus, item.warrantyStatus, item.warrantyDaysRemaining)
         bindField(binding.rowSeller, R.string.additem_label_seller, item.seller)
         bindField(binding.rowNotes, R.string.additem_label_notes, item.notes)
     }
@@ -119,6 +124,17 @@ class ItemDetailsFragment : Fragment(R.layout.fragment_item_details) {
             row.textFieldLabel.setText(labelRes)
             row.textFieldValue.text = value
         }
+    }
+
+    // BR-010 — status garancije se prikazuje uvek (i za NEPOZNATO), razdvojen bojom po statusu (tiket 22).
+    private fun bindWarrantyStatus(row: ItemDetailFieldBinding, status: WarrantyStatus, daysRemaining: Int?) {
+        row.root.isVisible = true
+        row.textFieldLabel.setText(R.string.itemdetails_label_warranty_status)
+        val statusLabel = getString(warrantyStatusLabelRes(status))
+        row.textFieldValue.text = daysRemaining?.let {
+            getString(R.string.itemdetails_warranty_status_with_days, statusLabel, it)
+        } ?: statusLabel
+        row.textFieldValue.setTextColor(ContextCompat.getColor(requireContext(), warrantyStatusColorRes(status)))
     }
 
     // BR-008 — destruktivna akcija trazi potvrdu sa nazivom predmeta u tekstu.

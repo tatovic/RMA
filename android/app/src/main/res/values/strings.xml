@@ -68,6 +68,10 @@
     <!-- US-15/BR-012 Valuta prikaza — tiket 21. -->
     <string name="profile_label_currency">Valuta prikaza</string>
 
+    <!-- FR-051/FR-052 Prag za upozorenje o garanciji — tiket 22. -->
+    <string name="profile_label_warranty_threshold">Prag za upozorenje o garanciji</string>
+    <string name="warranty_threshold_days_format">%d dana</string>
+
     <!-- SCR-03 Dashboard — tiket 13. -->
     <string name="dashboard_total_items_label">Ukupno predmeta</string>
     <string name="dashboard_total_value_label">Ukupna vrednost</string>
@@ -79,6 +83,10 @@
     <string name="dashboard_empty_message">Još uvek nemate dodatih predmeta. Dodajte prvi predmet da biste videli pregled stanja.</string>
     <string name="dashboard_empty_action">Idi u inventar</string>
     <string name="dashboard_error_retry_action">Pokušaj ponovo</string>
+
+    <!-- FR-053/FR-054 Kartica upozorenja o garanciji — tiket 22. -->
+    <string name="dashboard_warranty_warnings_title">Upozorenja o garanciji</string>
+    <string name="dashboard_warranty_warning">Garancija za %1$s ističe za %2$d dana</string>
 
     <!-- SCR-04 Inventar — tiket 14. -->
     <string name="inventory_item_subtitle">%1$s • %2$s</string>
@@ -171,6 +179,16 @@
 
     <!-- US-15/BR-013 Konverzija valute na detaljima predmeta — tiket 21. -->
     <string name="itemdetails_label_converted_value">Vrednost u valuti prikaza</string>
+
+    <!-- BR-010 Status garancije na detaljima predmeta — tiket 22. -->
+    <string name="itemdetails_label_warranty_status">Status garancije</string>
+    <string name="itemdetails_warranty_status_with_days">%1$s (još %2$d dana)</string>
+
+    <!-- BR-010 Statusi garancije, deljeni izmedju liste, detalja i pregleda — tiket 22. -->
+    <string name="warranty_status_active">Aktivna</string>
+    <string name="warranty_status_expiring_soon">Uskoro ističe</string>
+    <string name="warranty_status_expired">Istekla</string>
+    <string name="warranty_status_unknown">Nema informacije</string>
 
     <!-- Klijentska validacija forme lokacije — prd.md sekcija 9, VR-19 (tiket 17). -->
     <string name="error_vr_location_name">Naziv mora imati između 1 i 60 znakova</string>

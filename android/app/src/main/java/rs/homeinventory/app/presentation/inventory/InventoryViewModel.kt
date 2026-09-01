@@ -26,15 +26,18 @@ import rs.homeinventory.app.data.local.entity.LocationEntity
 import rs.homeinventory.app.data.local.dao.ItemListRow
 import rs.homeinventory.app.data.local.dao.effectiveValueMinor
 import rs.homeinventory.app.data.local.prefs.InventoryPreferences
+import rs.homeinventory.app.data.local.prefs.WarrantyPreferences
 import rs.homeinventory.app.data.remote.mapper.DateMapper
 import rs.homeinventory.app.data.repository.AuthRepository
 import rs.homeinventory.app.data.repository.ItemRepository
+import rs.homeinventory.app.domain.model.WarrantyStatus
 import rs.homeinventory.app.domain.util.MoneyFormatter
+import rs.homeinventory.app.domain.util.WarrantyCalculator
 import rs.homeinventory.app.util.Resource
 import rs.homeinventory.app.util.SEARCH_DEBOUNCE_MS
 import rs.homeinventory.app.util.SearchQueryNormalizer
 import rs.homeinventory.app.util.UiState
-import rs.homeinventory.app.util.WARRANTY_EXPIRING_SOON_DEFAULT_DAYS
+import rs.homeinventory.app.util.WARRANTY_THRESHOLD_DEFAULT_DAYS
 import javax.inject.Inject
 
 // SCR-04 — ekran cita iskljucivo iz Room-a, mreza samo puni bazu (tech.md sekcija 5.3, DEP-02).
@@ -44,6 +47,7 @@ class InventoryViewModel @Inject constructor(
     private val itemRepository: ItemRepository,
     authRepository: AuthRepository,
     private val inventoryPreferences: InventoryPreferences,
+    private val warrantyPreferences: WarrantyPreferences,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -169,11 +173,16 @@ class InventoryViewModel @Inject constructor(
         viewModelScope.launch { inventoryPreferences.saveSortMode(mode.name) }
     }
 
+    // ---- Prag garancije (FR-051/FR-052) — cuva se u DataStore, koristi ga i filter ovde i status na
+    // stavci liste (tiket 22). ----
+    val warrantyThreshold: StateFlow<Int> = warrantyPreferences.thresholdDays
+        .stateIn(viewModelScope, SharingStarted.Eagerly, WARRANTY_THRESHOLD_DEFAULT_DAYS)
+
     // FR-033 do FR-038 — filteri i sortiranje se kombinuju sa pretragom logickim I (tiket 20).
     private val filteredResults: StateFlow<List<ItemListRow>> = combine(
-        searchResults, filterState, sortMode, currentUser
-    ) { rows, filters, sort, user ->
-        applyFiltersAndSort(rows, filters, sort, user.currency)
+        searchResults, filterState, sortMode, currentUser, warrantyThreshold
+    ) { rows, filters, sort, user, threshold ->
+        applyFiltersAndSort(rows, filters, sort, user.currency, threshold)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val refreshPhase = MutableStateFlow<RefreshPhase>(RefreshPhase.Loading)
@@ -187,9 +196,9 @@ class InventoryViewModel @Inject constructor(
     val snackbarMessage: SharedFlow<String> = _snackbarMessage.asSharedFlow()
 
     val state: StateFlow<UiState<List<InventoryItemUi>>> = combine(
-        items, filteredResults, refreshPhase
-    ) { allRows, filteredRows, phase ->
-        toUiState(allRows, filteredRows, phase)
+        items, filteredResults, refreshPhase, warrantyThreshold
+    ) { allRows, filteredRows, phase, threshold ->
+        toUiState(allRows, filteredRows, phase, threshold)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Loading)
 
     init {
@@ -214,9 +223,10 @@ class InventoryViewModel @Inject constructor(
     private fun toUiState(
         allRows: List<ItemListRow>,
         filteredRows: List<ItemListRow>,
-        phase: RefreshPhase
+        phase: RefreshPhase,
+        thresholdDays: Int
     ): UiState<List<InventoryItemUi>> = when {
-        filteredRows.isNotEmpty() -> UiState.Success(filteredRows.map(::toItemUi))
+        filteredRows.isNotEmpty() -> UiState.Success(filteredRows.map { toItemUi(it, thresholdDays) })
         allRows.isNotEmpty() -> UiState.Empty
         phase is RefreshPhase.Loading -> UiState.Loading
         phase is RefreshPhase.Failed -> UiState.Error(phase.message)
@@ -234,14 +244,16 @@ class InventoryViewModel @Inject constructor(
         viewModelScope.launch { itemRepository.finalizeDeletedItemPhoto(id) }
     }
 
-    private fun toItemUi(row: ItemListRow): InventoryItemUi = InventoryItemUi(
+    // FR-055/BR-010 — status garancije stavke, izveden istim pravilom kao svuda (tiket 22).
+    private fun toItemUi(row: ItemListRow, thresholdDays: Int): InventoryItemUi = InventoryItemUi(
         id = row.id,
         name = row.name,
         categoryName = row.categoryName,
         locationName = row.locationName,
         priceFormatted = MoneyFormatter.format(row.effectiveValueMinor(), row.currency),
         imagePath = row.imagePath,
-        categoryIconKey = row.categoryIconKey
+        categoryIconKey = row.categoryIconKey,
+        warrantyStatus = WarrantyCalculator.status(DateMapper.parseLocalDate(row.warrantyExpirationDate), thresholdDays)
     )
 
     // FR-033 do FR-038 — filtriranje i sortiranje nad vec pretrazenim redovima (tiket 20).
@@ -253,7 +265,8 @@ class InventoryViewModel @Inject constructor(
         rows: List<ItemListRow>,
         filters: InventoryFilterState,
         sort: InventorySortMode,
-        displayCurrency: String
+        displayCurrency: String,
+        thresholdDays: Int
     ): List<ItemListRow> {
         val today = LocalDate.now()
         val filtered = rows.filter { row ->
@@ -261,7 +274,7 @@ class InventoryViewModel @Inject constructor(
                 (filters.locationIds.isEmpty() || row.locationId in filters.locationIds) &&
                 matchesPriceRange(row, filters, displayCurrency) &&
                 matchesPurchaseYear(row, filters.purchaseYear) &&
-                matchesWarranty(row, filters, today)
+                matchesWarranty(row, filters, today, thresholdDays)
         }
         return sortRows(filtered, sort, displayCurrency)
     }
@@ -279,13 +292,14 @@ class InventoryViewModel @Inject constructor(
         return row.purchaseDate?.take(4)?.toIntOrNull() == year
     }
 
-    // "Pod garancijom" = datum isteka nije prosao (D >= T). "Uskoro istice" je uzi podskup toga,
-    // do praga od WARRANTY_EXPIRING_SOON_DEFAULT_DAYS - isti smisao poredjenja kao BR-010 (tiket 22).
-    private fun matchesWarranty(row: ItemListRow, filters: InventoryFilterState, today: LocalDate): Boolean {
+    // "Pod garancijom" = status AKTIVNA ili USKORO_ISTICE (D >= T). "Uskoro istice" je uzi podskup toga,
+    // do korisnikovog praga (FR-051) — racuna se preko WarrantyCalculator, isto pravilo svuda (BR-010, tiket 22).
+    private fun matchesWarranty(row: ItemListRow, filters: InventoryFilterState, today: LocalDate, thresholdDays: Int): Boolean {
         if (!filters.underWarrantyOnly && !filters.warrantyExpiringSoonOnly) return true
         val expiration = DateMapper.parseLocalDate(row.warrantyExpirationDate) ?: return false
-        val underWarranty = !expiration.isBefore(today)
-        val expiringSoon = underWarranty && !expiration.isAfter(today.plusDays(WARRANTY_EXPIRING_SOON_DEFAULT_DAYS))
+        val status = WarrantyCalculator.status(expiration, thresholdDays, today)
+        val underWarranty = status == WarrantyStatus.AKTIVNA || status == WarrantyStatus.USKORO_ISTICE
+        val expiringSoon = status == WarrantyStatus.USKORO_ISTICE
         return (!filters.underWarrantyOnly || underWarranty) && (!filters.warrantyExpiringSoonOnly || expiringSoon)
     }
 

@@ -14,12 +14,15 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import rs.homeinventory.app.data.local.dao.ItemDetailsRow
 import rs.homeinventory.app.data.local.dao.effectiveValueMinor
+import rs.homeinventory.app.data.local.prefs.WarrantyPreferences
 import rs.homeinventory.app.data.remote.mapper.DateMapper
 import rs.homeinventory.app.data.repository.AuthRepository
 import rs.homeinventory.app.data.repository.CurrencyRepository
 import rs.homeinventory.app.data.repository.ItemRepository
+import rs.homeinventory.app.domain.model.WarrantyStatus
 import rs.homeinventory.app.domain.util.CurrencyConverter
 import rs.homeinventory.app.domain.util.MoneyFormatter
+import rs.homeinventory.app.domain.util.WarrantyCalculator
 import rs.homeinventory.app.util.ErrorCode
 import rs.homeinventory.app.util.ErrorMessageProvider
 import rs.homeinventory.app.util.Resource
@@ -33,6 +36,7 @@ class ItemDetailsViewModel @Inject constructor(
     private val itemRepository: ItemRepository,
     private val currencyRepository: CurrencyRepository,
     private val authRepository: AuthRepository,
+    private val warrantyPreferences: WarrantyPreferences,
     private val errorMessageProvider: ErrorMessageProvider,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -55,9 +59,10 @@ class ItemDetailsViewModel @Inject constructor(
     val state: StateFlow<UiState<ItemDetailsUi>> = combine(
         itemRepository.observeItemDetails(itemId),
         authRepository.currentUser.filterNotNull(),
-        rates
-    ) { row, user, currentRates ->
-        row?.let { UiState.Success(toUi(it, user.currency, currentRates)) }
+        rates,
+        warrantyPreferences.thresholdDays
+    ) { row, user, currentRates, thresholdDays ->
+        row?.let { UiState.Success(toUi(it, user.currency, currentRates, thresholdDays)) }
             ?: UiState.Error(errorMessageProvider.message(ErrorCode.NOT_FOUND))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Loading)
 
@@ -76,10 +81,24 @@ class ItemDetailsViewModel @Inject constructor(
 
     // US-15 — predmet cija se valuta razlikuje od valute prikaza pokazuje i preracunati iznos;
     // BR-013 — ako kurs nedostaje, izdvaja se poruka umesto pogresnog broja.
-    private fun toUi(row: ItemDetailsRow, displayCurrency: String, rates: Map<String, Double>): ItemDetailsUi {
+    private fun toUi(
+        row: ItemDetailsRow,
+        displayCurrency: String,
+        rates: Map<String, Double>,
+        thresholdDays: Int
+    ): ItemDetailsUi {
         val showsConversion = row.currency != displayCurrency
         val convertedValueMinor = if (showsConversion) {
             CurrencyConverter.convert(row.effectiveValueMinor(), row.currency, displayCurrency, rates)
+        } else {
+            null
+        }
+
+        // BR-010 — status i preostali dani, uvek izvedeni iz datuma isteka, nikad sacuvani (tiket 22).
+        val warrantyExpiration = DateMapper.parseLocalDate(row.warrantyExpirationDate)
+        val warrantyStatus = WarrantyCalculator.status(warrantyExpiration, thresholdDays)
+        val warrantyDaysRemaining = if (warrantyExpiration != null && warrantyStatus != WarrantyStatus.ISTEKLA) {
+            WarrantyCalculator.daysRemaining(warrantyExpiration).toInt()
         } else {
             null
         }
@@ -101,7 +120,9 @@ class ItemDetailsViewModel @Inject constructor(
             notes = row.notes,
             imagePath = row.imagePath,
             convertedValueFormatted = convertedValueMinor?.let { MoneyFormatter.format(it, displayCurrency) },
-            convertedValueUnavailable = showsConversion && convertedValueMinor == null
+            convertedValueUnavailable = showsConversion && convertedValueMinor == null,
+            warrantyStatus = warrantyStatus,
+            warrantyDaysRemaining = warrantyDaysRemaining
         )
     }
 }
