@@ -20,6 +20,17 @@ const serializeUser = (user) => ({
   createdAt: toISOString(user.created_at),
 });
 
+// OWN-06 — admin lista korisnika: samo brojač predmeta, nikad njihov sadržaj.
+const serializeAdminUser = (user) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  isActive: Boolean(user.is_active),
+  createdAt: toISOString(user.created_at),
+  itemCount: Number(user.item_count),
+});
+
 // Mapiranje kolona — db.md sekcija 7. Svako odstupanje je bag.
 const serializeItem = (item) => ({
   id: item.id,
@@ -71,6 +82,7 @@ module.exports = {
   toISOString,
   toDateOnlyString,
   serializeUser,
+  serializeAdminUser,
   serializeItem,
   serializeCategory,
   serializeLocation,

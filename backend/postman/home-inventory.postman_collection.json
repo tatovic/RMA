@@ -574,6 +574,74 @@
       ]
     },
     {
+      "name": "Administracija",
+      "item": [
+        {
+          "name": "Sistemska statistika (samo ADMIN) — 403 za običnog korisnika",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 403 — FR-106, testni nalog nije ADMIN', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/stats", "host": ["{{baseUrl}}"], "path": ["admin", "stats"] }
+          }
+        },
+        {
+          "name": "Lista korisnika (samo ADMIN) — 403 za običnog korisnika",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Status je 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] }
+          }
+        },
+        {
+          "name": "Promena statusa naloga (samo ADMIN) — 403 za običnog korisnika",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status je 403 — provera role ide pre obrade zahteva', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"isActive\": false\n}" },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/00000000-0000-0000-0000-000000000000/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "00000000-0000-0000-0000-000000000000", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Vlasništvo (ownership)",
       "item": [
         {

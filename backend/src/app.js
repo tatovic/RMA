@@ -12,6 +12,7 @@ const usersRoutes = require('./modules/users/users.routes');
 const itemsRoutes = require('./modules/items/items.routes');
 const categoriesRoutes = require('./modules/categories/categories.routes');
 const locationsRoutes = require('./modules/locations/locations.routes');
+const adminRoutes = require('./modules/admin/admin.routes');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/items', itemsRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/locations', locationsRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
