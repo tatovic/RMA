@@ -1,6 +1,5 @@
 package rs.homeinventory.app.data.remote.api
 
-import com.google.gson.JsonObject
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -10,6 +9,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import rs.homeinventory.app.data.remote.dto.AdminStatsDto
 import rs.homeinventory.app.data.remote.dto.AdminUserDto
 import rs.homeinventory.app.data.remote.dto.AuthResponseDto
 import rs.homeinventory.app.data.remote.dto.CategoriesResponseDto
@@ -90,13 +90,13 @@ interface BackendApi {
     @DELETE("locations/{id}")
     suspend fun deleteLocation(@Path("id") id: String): Response<Unit>
 
-    // ---- 6.6 Administracija (backend modul jos nije implementiran, ugovor po tech.md) ----
-    @GET("admin/statistics")
-    suspend fun getStatistics(): Response<JsonObject>
+    // ---- 6.6 Administracija — backend/src/modules/admin (tiket 24) ----
+    @GET("admin/stats")
+    suspend fun getAdminStats(): Response<AdminStatsDto>
 
     @GET("admin/users")
     suspend fun getAdminUsers(): Response<List<AdminUserDto>>
 
     @PATCH("admin/users/{id}/status")
-    suspend fun updateUserStatus(@Path("id") id: String, @Body body: UpdateUserStatusRequestDto): Response<Unit>
+    suspend fun updateUserStatus(@Path("id") id: String, @Body body: UpdateUserStatusRequestDto): Response<AdminUserDto>
 }

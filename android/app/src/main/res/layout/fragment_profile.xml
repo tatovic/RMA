@@ -90,6 +90,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/layoutWarrantyThreshold" />
 
+    <!-- FR-100 — vidljivo samo roli ADMIN (tiket 25). -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonAdmin"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/auth_field_spacing"
+        android:text="@string/profile_action_admin"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/buttonLocations"
+        tools:visibility="visible" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonLogout"
         android:layout_width="0dp"
@@ -98,6 +112,6 @@
         android:text="@string/profile_action_logout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonLocations" />
+        app:layout_constraintTop_toBottomOf="@id/buttonAdmin" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -2,9 +2,7 @@ package rs.homeinventory.app.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
 
-// tech.md sekcija 6.6. Backend modul admin/statistics jos nije implementiran (van obima tiketa 10) —
-// ugovor je definisan po tech.md da bi BackendApi bio kompletan; GET /api/admin/statistics zato
-// vraca sirov JsonObject umesto tipizovane DTO klase dok tacan oblik odgovora ne bude poznat.
+// backend/src/utils/serializer.js#serializeAdminUser (tiket 24).
 data class AdminUserDto(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
@@ -17,4 +15,13 @@ data class AdminUserDto(
 
 data class UpdateUserStatusRequestDto(
     @SerializedName("isActive") val isActive: Boolean
+)
+
+// backend/src/modules/admin/admin.service.js#getStats.
+data class AdminStatsDto(
+    @SerializedName("registeredUsers") val registeredUsers: Int,
+    @SerializedName("activeUsers") val activeUsers: Int,
+    @SerializedName("deactivatedUsers") val deactivatedUsers: Int,
+    @SerializedName("totalItems") val totalItems: Int,
+    @SerializedName("totalCategories") val totalCategories: Int
 )

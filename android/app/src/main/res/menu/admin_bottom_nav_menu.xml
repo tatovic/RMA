@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ACT-4 — bottom navigacija administracije, tri ekrana (tiket 25). -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/adminDashboardFragment"
+        android:icon="@drawable/ic_nav_admin_dashboard"
+        android:title="@string/nav_admin_dashboard" />
+
+    <item
+        android:id="@+id/adminUsersFragment"
+        android:icon="@drawable/ic_nav_admin_users"
+        android:title="@string/nav_admin_users" />
+
+    <item
+        android:id="@+id/adminCategoriesFragment"
+        android:icon="@drawable/ic_nav_admin_categories"
+        android:title="@string/nav_admin_categories" />
+
+</menu>

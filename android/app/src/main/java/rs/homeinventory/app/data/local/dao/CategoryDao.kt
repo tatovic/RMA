@@ -18,6 +18,10 @@ interface CategoryDao {
 
     @Upsert suspend fun upsertAll(categories: List<CategoryEntity>)
 
+    // SCR-13 — admin brise globalnu kategoriju (tiket 25); kes mora odmah da odrazi server.
+    @Query("DELETE FROM categories WHERE id = :id")
+    suspend fun delete(id: String)
+
     @Query("DELETE FROM categories")
     suspend fun clear()
 }

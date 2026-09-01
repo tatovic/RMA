@@ -236,4 +236,48 @@
     <string name="locations_delete_blocked_title">Brisanje nije moguće</string>
     <string name="locations_delete_blocked_message">Lokacija „%1$s" se koristi kod %2$d predmeta i ne može se obrisati. Prvo premestite ili obrišite te predmete.</string>
     <string name="locations_delete_blocked_confirm">Razumem</string>
+
+    <!-- SCR-09 Profil — ulaz u administraciju, tiket 25 (FR-100). -->
+    <string name="profile_action_admin">Administracija</string>
+
+    <!-- Zajednicko za sva tri administratorska ekrana — tiket 25. -->
+    <string name="admin_action_retry">Pokušaj ponovo</string>
+
+    <!-- SCR-11 Pregled sistema — tiket 25. -->
+    <string name="admin_dashboard_users_section_title">Korisnici</string>
+    <string name="admin_dashboard_inventory_section_title">Inventar</string>
+    <string name="admin_dashboard_registered_users">Registrovani korisnici</string>
+    <string name="admin_dashboard_active_users">Aktivni nalozi</string>
+    <string name="admin_dashboard_deactivated_users">Deaktivirani nalozi</string>
+    <string name="admin_dashboard_total_items">Ukupno predmeta</string>
+    <string name="admin_dashboard_total_categories">Ukupno kategorija</string>
+
+    <!-- SCR-12 Spisak korisnika — tiket 25. -->
+    <string name="admin_users_empty_title">Nema registrovanih korisnika</string>
+    <string name="admin_users_activate_dialog_title">Aktivacija naloga</string>
+    <string name="admin_users_activate_dialog_message">Da li želite da aktivirate nalog „%1$s"?</string>
+    <string name="admin_users_deactivate_dialog_title">Deaktivacija naloga</string>
+    <string name="admin_users_deactivate_dialog_message">Da li želite da deaktivirate nalog „%1$s"? Korisnik odmah gubi pristup aplikaciji.</string>
+    <string name="admin_users_status_dialog_confirm">Potvrdi</string>
+    <string name="admin_users_status_dialog_cancel">Otkaži</string>
+
+    <!-- SCR-13 Globalne kategorije — tiket 25. -->
+    <string name="error_vr_category_name">Naziv mora imati između 1 i 60 znakova</string>
+    <string name="admin_categories_action_edit">Izmeni</string>
+    <string name="admin_categories_action_delete">Obriši</string>
+    <string name="admin_categories_label_name">Naziv</string>
+    <string name="admin_categories_empty_title">Nema definisanih kategorija</string>
+    <string name="admin_categories_empty_action">Dodaj kategoriju</string>
+    <string name="admin_categories_dialog_add_title">Nova kategorija</string>
+    <string name="admin_categories_dialog_edit_title">Preimenovanje kategorije</string>
+    <string name="admin_categories_dialog_save">Sačuvaj</string>
+    <string name="admin_categories_dialog_cancel">Otkaži</string>
+    <string name="admin_categories_delete_dialog_title">Brisanje kategorije</string>
+    <string name="admin_categories_delete_dialog_message">Da li ste sigurni da želite da obrišete „%1$s"?</string>
+    <string name="admin_categories_delete_dialog_confirm">Obriši</string>
+    <string name="admin_categories_delete_dialog_cancel">Otkaži</string>
+    <string name="admin_categories_delete_confirmation">Kategorija je obrisana.</string>
+    <string name="admin_categories_delete_blocked_title">Brisanje nije moguće</string>
+    <string name="admin_categories_delete_blocked_message">Kategorija „%1$s" se koristi kod %2$d predmeta i ne može se obrisati.</string>
+    <string name="admin_categories_delete_blocked_confirm">Razumem</string>
 </resources>

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -18,9 +19,10 @@ import rs.homeinventory.app.R
 import rs.homeinventory.app.data.local.UserRole
 import rs.homeinventory.app.databinding.FragmentProfileBinding
 import rs.homeinventory.app.domain.model.User
+import rs.homeinventory.app.ui.AdminActivity
 import rs.homeinventory.app.ui.AuthenticationActivity
 
-// SCR-09 — prikaz podataka i odjava (tiket 12); izmena profila i ulaz u administraciju dolaze kasnije.
+// SCR-09 — prikaz podataka i odjava (tiket 12); izmena profila dolazi kasnije, ulaz u administraciju u tiketu 25.
 @AndroidEntryPoint
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
@@ -57,6 +59,11 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             findNavController().navigate(R.id.action_profileFragment_to_locationsFragment)
         }
 
+        // FR-100 — ulaz u administraciju.
+        binding.buttonAdmin.setOnClickListener {
+            startActivity(Intent(requireContext(), AdminActivity::class.java))
+        }
+
         // BR-008 — destruktivna akcija trazi potvrdu.
         binding.buttonLogout.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
@@ -84,6 +91,8 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         binding.textRole.setText(
             if (user.role == UserRole.ADMIN) R.string.profile_role_admin else R.string.profile_role_user
         )
+        // FR-100 — dugme za administraciju vidljivo samo roli ADMIN.
+        binding.buttonAdmin.isVisible = user.role == UserRole.ADMIN
         // false — postavlja tekst bez ponovnog filtriranja padajuce liste.
         binding.editCurrency.setText(user.currency, false)
     }
