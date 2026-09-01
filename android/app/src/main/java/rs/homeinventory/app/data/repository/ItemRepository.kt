@@ -4,7 +4,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import retrofit2.Response
-import rs.homeinventory.app.data.local.SyncStatus
 import rs.homeinventory.app.data.local.dao.CategoryAggregate
 import rs.homeinventory.app.data.local.dao.CategoryDao
 import rs.homeinventory.app.data.local.dao.ItemDao
@@ -16,11 +15,10 @@ import rs.homeinventory.app.data.local.entity.CategoryEntity
 import rs.homeinventory.app.data.local.entity.InventoryItemEntity
 import rs.homeinventory.app.data.local.entity.LocationEntity
 import rs.homeinventory.app.data.remote.api.BackendApi
-import rs.homeinventory.app.data.remote.dto.ItemDto
 import rs.homeinventory.app.data.remote.dto.LocationDto
 import rs.homeinventory.app.data.remote.dto.LocationRequestDto
-import rs.homeinventory.app.data.remote.mapper.toDto
 import rs.homeinventory.app.data.remote.mapper.toEntity
+import rs.homeinventory.app.data.sync.SyncManager
 import rs.homeinventory.app.util.ErrorMessageProvider
 import rs.homeinventory.app.util.PhotoStorage
 import rs.homeinventory.app.util.Resource
@@ -30,8 +28,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 // Jedina tacka pristupa predmetima/kategorijama/lokacijama — DEP-03. Puni Room sa servera;
-// UI cita iskljucivo iz Room-a (tech.md sekcija 5.3). Puna povlaka bez delta parametra —
-// dvosmerna sinhronizacija dolazi u tiketu 26.
+// UI cita iskljucivo iz Room-a (tech.md sekcija 5.3). Dvosmerna sinhronizacija predmeta (push pa pull,
+// delta preko `since`, DB-RULE-02/03/04) je u SyncManager-u (tiket 26).
 @Singleton
 class ItemRepository @Inject constructor(
     private val api: BackendApi,
@@ -39,7 +37,8 @@ class ItemRepository @Inject constructor(
     private val categoryDao: CategoryDao,
     private val locationDao: LocationDao,
     private val errorMessageProvider: ErrorMessageProvider,
-    private val photoStorage: PhotoStorage
+    private val photoStorage: PhotoStorage,
+    private val syncManager: SyncManager
 ) {
     fun observeCategoryAggregates(userId: String): Flow<List<CategoryAggregate>> =
         itemDao.observeCategoryAggregates(userId)
@@ -68,11 +67,12 @@ class ItemRepository @Inject constructor(
     // SCR-07 — detalji predmeta (tiket 16), join sa kategorijom/lokacijom kao kod liste.
     fun observeItemDetails(id: String): Flow<ItemDetailsRow?> = itemDao.observeDetails(id)
 
-    // Brisanje predmeta (FR-025/FR-026) — soft delete lokalno pa odmah pokusaj slanja serveru.
-    // Neuspeh slanja ne blokira korisnika; predmet ostaje PENDING_DELETE do pune sinhronizacije (tiket 26).
+    // Brisanje predmeta (FR-025/FR-026) — soft delete lokalno pa odmah pokusaj pune sinhronizacije
+    // (FR-093). Neuspeh ne blokira korisnika (FR-097); predmet ostaje PENDING_DELETE (ili PENDING_CREATE
+    // ako server nikad nije saznao za njega, DB-RULE-03) do sledeceg uspesnog sync-a.
     suspend fun deleteItem(id: String): Unit = withContext(Dispatchers.IO) {
         itemDao.softDelete(id, System.currentTimeMillis())
-        safeApiCall(errorMessageProvider) { api.deleteItem(id) }
+        syncManager.sync()
     }
 
     // Opoziv brisanja u roku od pet sekundi (FR-027).
@@ -87,21 +87,11 @@ class ItemRepository @Inject constructor(
         if (item.deletedAt != null) photoStorage.delete(item.imagePath)
     }
 
-    // Cuvanje predmeta (FR-029, FR-030) — upisuje lokalno pa odmah pokusava jedan poziv ka serveru.
-    // Neuspeh slanja ne blokira korisnika, predmet ostaje PENDING_* do pune sinhronizacije (tiket 26).
-    suspend fun saveItem(entity: InventoryItemEntity, isCreate: Boolean): Unit = withContext(Dispatchers.IO) {
+    // Cuvanje predmeta (FR-029, FR-030) — upisuje lokalno pa odmah pokusava punu sinhronizaciju (FR-093).
+    // Neuspeh ne blokira korisnika (FR-097), predmet ostaje PENDING_* do sledeceg uspesnog sync-a.
+    suspend fun saveItem(entity: InventoryItemEntity): Unit = withContext(Dispatchers.IO) {
         itemDao.upsert(entity)
-
-        val call: suspend () -> Response<ItemDto> = if (isCreate) {
-            { api.createItem(entity.toDto()) }
-        } else {
-            { api.updateItem(entity.id, entity.toDto()) }
-        }
-
-        val result = safeApiCall(errorMessageProvider, call)
-        if (result is Resource.Success) {
-            itemDao.upsert(result.data.toEntity(keepImagePath = entity.imagePath, syncStatus = SyncStatus.SYNCED))
-        }
+        syncManager.sync()
     }
 
     // SCR-10 — CRUD lokacija (tiket 17). Za razliku od predmeta ovo je mreza-prvo: naziv mora
@@ -140,6 +130,9 @@ class ItemRepository @Inject constructor(
         }
     }
 
+    // SCR-03/SCR-04 — pokrece se pri otvaranju Dashboard-a i Inventara, posle svake izmene i rucno
+    // povlacenjem liste nadole (FR-092/FR-093/FR-094). Kategorije i lokacije se i dalje samo pune
+    // (server je njihov jedini izvor istine, OWN-05); predmeti idu kroz punu dvosmernu sinhronizaciju.
     suspend fun refresh(): Resource<Unit> = withContext(Dispatchers.IO) {
         val categoriesResult = pullAndStore({ api.getCategories() }) { response ->
             categoryDao.upsertAll(response.categories.map { it.toEntity() })
@@ -151,13 +144,7 @@ class ItemRepository @Inject constructor(
         }
         if (locationsResult !is Resource.Success) return@withContext locationsResult
 
-        pullAndStore({ api.getItems() }) { response ->
-            response.items.forEach { dto ->
-                // DB-RULE-02 (FR-085) — imagePath postoji samo lokalno i mora se sacuvati pri pull-u.
-                val existingImagePath = itemDao.getById(dto.id)?.imagePath
-                itemDao.upsert(dto.toEntity(keepImagePath = existingImagePath))
-            }
-        }
+        syncManager.sync()
     }
 
     private suspend fun <T> pullAndStore(

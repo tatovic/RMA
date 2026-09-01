@@ -158,12 +158,30 @@ interface ItemDao {
     @Query("UPDATE inventory_items SET syncStatus = :status WHERE id = :id")
     suspend fun setSyncStatus(id: String, status: SyncStatus)
 
-    // Soft delete (FR-026)
-    @Query("UPDATE inventory_items SET deletedAt = :now, updatedAt = :now, syncStatus = 'PENDING_DELETE' WHERE id = :id")
+    // Soft delete (FR-026). PENDING_CREATE se namerno NE prebacuje u PENDING_DELETE (DB-RULE-03) —
+    // server jos ne zna za predmet, pa SyncManager mora moci da prepozna taj slucaj i obrise ga
+    // lokalno bez ijednog poziva servera. Svi ostali statusi idu u PENDING_DELETE kao i do sada.
+    @Query(
+        """
+        UPDATE inventory_items
+        SET deletedAt = :now, updatedAt = :now,
+            syncStatus = CASE WHEN syncStatus = 'PENDING_CREATE' THEN 'PENDING_CREATE' ELSE 'PENDING_DELETE' END
+        WHERE id = :id
+        """
+    )
     suspend fun softDelete(id: String, now: Long)
 
-    // Opoziv brisanja u roku od pet sekundi (FR-027) — puna sinhronizacija sa serverom dolazi u tiketu 26.
-    @Query("UPDATE inventory_items SET deletedAt = NULL, syncStatus = 'PENDING_UPDATE' WHERE id = :id")
+    // Opoziv brisanja u roku od pet sekundi (FR-027). Isto pravilo kao kod softDelete: predmet koji
+    // server nikad nije video ostaje PENDING_CREATE (ceka POST), ne PENDING_UPDATE (koje bi pokusalo
+    // PUT nad predmetom koji server ne poznaje).
+    @Query(
+        """
+        UPDATE inventory_items
+        SET deletedAt = NULL,
+            syncStatus = CASE WHEN syncStatus = 'PENDING_CREATE' THEN 'PENDING_CREATE' ELSE 'PENDING_UPDATE' END
+        WHERE id = :id
+        """
+    )
     suspend fun undoDelete(id: String)
 
     // Fizicko uklanjanje tek POSLE potvrde servera

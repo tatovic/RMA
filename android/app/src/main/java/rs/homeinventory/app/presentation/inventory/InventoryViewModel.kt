@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import rs.homeinventory.app.data.local.SyncStatus
 import rs.homeinventory.app.data.local.entity.CategoryEntity
 import rs.homeinventory.app.data.local.entity.LocationEntity
 import rs.homeinventory.app.data.local.dao.ItemListRow
@@ -253,7 +254,8 @@ class InventoryViewModel @Inject constructor(
         priceFormatted = MoneyFormatter.format(row.effectiveValueMinor(), row.currency),
         imagePath = row.imagePath,
         categoryIconKey = row.categoryIconKey,
-        warrantyStatus = WarrantyCalculator.status(DateMapper.parseLocalDate(row.warrantyExpirationDate), thresholdDays)
+        warrantyStatus = WarrantyCalculator.status(DateMapper.parseLocalDate(row.warrantyExpirationDate), thresholdDays),
+        isPending = row.syncStatus != SyncStatus.SYNCED
     )
 
     // FR-033 do FR-038 — filtriranje i sortiranje nad vec pretrazenim redovima (tiket 20).

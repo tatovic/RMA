@@ -15,6 +15,7 @@ import rs.homeinventory.app.data.local.prefs.UserPreferences
 import rs.homeinventory.app.data.remote.api.BackendApi
 import rs.homeinventory.app.data.remote.api.CurrencyApi
 import rs.homeinventory.app.data.remote.interceptor.AuthInterceptor
+import rs.homeinventory.app.data.session.SessionManager
 import rs.homeinventory.app.util.AndroidErrorMessageProvider
 import rs.homeinventory.app.util.ErrorMessageProvider
 import java.util.concurrent.TimeUnit
@@ -29,7 +30,8 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun authInterceptor(prefs: UserPreferences): AuthInterceptor = AuthInterceptor(prefs)
+    fun authInterceptor(prefs: UserPreferences, sessionManager: SessionManager): AuthInterceptor =
+        AuthInterceptor(prefs, sessionManager)
 
     @Provides
     @Singleton

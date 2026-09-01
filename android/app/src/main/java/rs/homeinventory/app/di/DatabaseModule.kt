@@ -12,6 +12,7 @@ import rs.homeinventory.app.data.local.dao.CategoryDao
 import rs.homeinventory.app.data.local.dao.ExchangeRateDao
 import rs.homeinventory.app.data.local.dao.ItemDao
 import rs.homeinventory.app.data.local.dao.LocationDao
+import rs.homeinventory.app.data.local.dao.SyncMetadataDao
 import rs.homeinventory.app.data.local.dao.UserDao
 import javax.inject.Singleton
 
@@ -39,4 +40,7 @@ object DatabaseModule {
 
     @Provides
     fun exchangeRateDao(database: HomeInventoryDatabase): ExchangeRateDao = database.exchangeRateDao()
+
+    @Provides
+    fun syncMetadataDao(database: HomeInventoryDatabase): SyncMetadataDao = database.syncMetadataDao()
 }

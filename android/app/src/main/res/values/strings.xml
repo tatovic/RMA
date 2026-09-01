@@ -114,6 +114,8 @@
     <string name="inventory_empty_action">Dodaj predmet</string>
     <string name="inventory_error_retry_action">Pokušaj ponovo</string>
     <string name="inventory_item_saved_confirmation">Predmet je sačuvan.</string>
+    <!-- FR-096 — tiket 26. -->
+    <string name="inventory_item_pending_sync_description">Čeka sinhronizaciju</string>
 
     <!-- SCR-04 Pretraga — tiket 19, FR-031/FR-032. -->
     <string name="inventory_search_hint">Pretraži naziv, proizvođača, model, serijski broj, kategoriju ili lokaciju</string>

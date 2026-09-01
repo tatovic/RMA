@@ -197,6 +197,52 @@ class ItemDaoTest {
         assertTrue(aggregates.none { it.totalMinor == 1_000_000L })
     }
 
+    // DB-RULE-03 (tiket 26) — predmet koji server nikad nije video ostaje PENDING_CREATE i posle
+    // brisanja, da bi SyncManager mogao da ga obrise lokalno bez ijednog poziva serveru.
+    @Test
+    fun softDelete_keepsPendingCreateStatus_forNeverSyncedItem() = runTest {
+        itemDao.upsert(item(id = "1", name = "Nov predmet").copy(syncStatus = SyncStatus.PENDING_CREATE))
+
+        itemDao.softDelete("1", now = 500L)
+
+        val stored = itemDao.getById("1")!!
+        assertEquals(SyncStatus.PENDING_CREATE, stored.syncStatus)
+        assertEquals(500L, stored.deletedAt)
+    }
+
+    @Test
+    fun softDelete_setsPendingDelete_forAlreadySyncedItem() = runTest {
+        itemDao.upsert(item(id = "1", name = "Sinhronizovan predmet"))
+
+        itemDao.softDelete("1", now = 500L)
+
+        assertEquals(SyncStatus.PENDING_DELETE, itemDao.getById("1")!!.syncStatus)
+    }
+
+    // FR-027 opoziv brisanja mora vratiti isti status koji je predmet imao pre brisanja — inace bi
+    // sync pokusao PUT nad predmetom koji server nikad nije video.
+    @Test
+    fun undoDelete_restoresPendingCreateStatus_forNeverSyncedItem() = runTest {
+        itemDao.upsert(item(id = "1", name = "Nov predmet").copy(syncStatus = SyncStatus.PENDING_CREATE))
+        itemDao.softDelete("1", now = 500L)
+
+        itemDao.undoDelete("1")
+
+        val stored = itemDao.getById("1")!!
+        assertEquals(SyncStatus.PENDING_CREATE, stored.syncStatus)
+        assertEquals(null, stored.deletedAt)
+    }
+
+    @Test
+    fun undoDelete_setsPendingUpdate_forPreviouslySyncedItem() = runTest {
+        itemDao.upsert(item(id = "1", name = "Sinhronizovan predmet"))
+        itemDao.softDelete("1", now = 500L)
+
+        itemDao.undoDelete("1")
+
+        assertEquals(SyncStatus.PENDING_UPDATE, itemDao.getById("1")!!.syncStatus)
+    }
+
     @Test
     fun clearAllData_removesContentFromEveryTable() = runTest {
         itemDao.upsert(item(id = "1", name = "Predmet"))

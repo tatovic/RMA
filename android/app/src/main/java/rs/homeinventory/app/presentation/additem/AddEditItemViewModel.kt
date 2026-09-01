@@ -140,7 +140,7 @@ class AddEditItemViewModel @Inject constructor(
                 syncStatus = if (isCreate) SyncStatus.PENDING_CREATE else SyncStatus.PENDING_UPDATE
             )
 
-            itemRepository.saveItem(entity, isCreate)
+            itemRepository.saveItem(entity)
             _pendingImagePath.value = null
             _saveState.value = Resource.Success(id)
         }

@@ -12,5 +12,7 @@ data class InventoryItemUi(
     val imagePath: String?,
     val categoryIconKey: String?,
     // FR-055/BR-010 — status garancije, uvek izveden, nikad sacuvan (tiket 22).
-    val warrantyStatus: WarrantyStatus
+    val warrantyStatus: WarrantyStatus,
+    // FR-096 — vidljiva oznaka za stavke koje jos cekaju sinhronizaciju (tiket 26).
+    val isPending: Boolean
 )

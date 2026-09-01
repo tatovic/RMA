@@ -26,3 +26,6 @@ const val SEARCH_DEBOUNCE_MS = 300L
 // i filter u listi inventara (FR-037) i podesavanje u Profilu (tiket 22).
 const val WARRANTY_THRESHOLD_DEFAULT_DAYS = 30
 val WARRANTY_THRESHOLD_OPTIONS = listOf(7, 30, 60, 90)
+
+// FR-098 — kljuc u sync_metadata pod kojim SyncManager cuva serversko vreme poslednjeg delta pull-a (tiket 26).
+const val SYNC_METADATA_ITEMS_LAST_SYNC_KEY = "items_last_sync_at"
