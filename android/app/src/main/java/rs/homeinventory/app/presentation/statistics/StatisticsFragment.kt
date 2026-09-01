@@ -105,9 +105,13 @@ class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
         val onSurfaceColor = themeOnSurfaceColor()
         val colors = chartCategoryColors(requireContext(), stats.size)
 
-        val entries = stats.map { PieEntry(it.valueMinor.coerceAtLeast(0L) / 100f, it.categoryName) }
+        // Kategorija bez vrednosti (npr. svi predmeti bez cene) nema sta da prikaze na pie chart-u —
+        // nulta isecka i dalje iscrtava labelu koja se preklapa sa susednom (MPAndroidChart ogranicenje).
+        // Indeksi se cuvaju da boja ostane ista kao na bar chart-u ispod i za kategorije koje ovde nisu prikazane.
+        val visibleIndices = stats.indices.filter { stats[it].valueMinor > 0 }
+        val entries = visibleIndices.map { PieEntry(stats[it].valueMinor / 100f, stats[it].categoryName) }
         val dataSet = PieDataSet(entries, "").apply {
-            setColors(colors)
+            setColors(visibleIndices.map { colors[it] })
             sliceSpace = 2f
             setValueTextColor(onSurfaceColor)
             valueTextSize = 12f
@@ -122,7 +126,14 @@ class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
         chart.setDrawEntryLabels(false)
         chart.setUsePercentValues(true)
         chart.setHoleColor(Color.TRANSPARENT)
-        chart.legend.textColor = onSurfaceColor
+        // Do 11 podrazumevanih kategorija (FR-041) ne staje u jedan red — bez wrap-a legenda se
+        // secala na pola i ostatak kategorija ostajao bez vidljivog imena/boje.
+        chart.legend.apply {
+            textColor = onSurfaceColor
+            isWordWrapEnabled = true
+            textSize = 11f
+            formSize = 10f
+        }
         chart.setExtraOffsets(4f, 4f, 4f, 4f)
         chart.invalidate()
     }
