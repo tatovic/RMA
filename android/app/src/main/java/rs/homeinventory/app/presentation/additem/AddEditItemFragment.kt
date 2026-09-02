@@ -2,7 +2,6 @@ package rs.homeinventory.app.presentation.additem
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
@@ -38,6 +37,7 @@ import rs.homeinventory.app.util.RESULT_ITEM_SAVED
 import rs.homeinventory.app.util.RESULT_ITEM_SAVED_ID
 import rs.homeinventory.app.util.Resource
 import rs.homeinventory.app.util.SUPPORTED_CURRENCIES
+import rs.homeinventory.app.util.UiState
 import rs.homeinventory.app.util.photoFile
 import java.math.BigDecimal
 import java.time.Instant
@@ -47,6 +47,8 @@ import java.time.format.DateTimeFormatter
 
 // SCR-06 — ista forma za dodavanje i izmenu predmeta (tiket 15). itemId (Safe Args, null = dodavanje)
 // se cita direktno u ViewModel-u kroz SavedStateHandle.
+// NFR-04 (tiket 27) — selekcije/datumi/fotografija/dirty-snapshot zive u ViewModel-u, ne kao obicna
+// polja Fragmenta, jer polja Fragmenta rotacija brise dok ViewModel instanca opstaje nepromenjena.
 @AndroidEntryPoint
 class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
 
@@ -58,29 +60,17 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
 
     private val dateDisplayFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy.")
 
+    // Obnavlja se iz viewModel.categories/locations pri svakom onViewCreated (i posle rotacije), pa
+    // ne mora da zivi u ViewModel-u kao izabrane vrednosti koje ta lista opisuje.
     private var categoriesSnapshot: List<CategoryEntity> = emptyList()
     private var locationsSnapshot: List<LocationEntity> = emptyList()
-
-    private var selectedCategoryId: String? = null
-    private var selectedLocationId: String? = null
-    private var selectedPurchaseDate: LocalDate? = null
-    private var selectedWarrantyDate: LocalDate? = null
-
-    // Fotografija koju predmet vec ima (edit rezim); null u rezimu dodavanja ili ako predmet nema sliku.
-    private var existingImagePath: String? = null
-
-    // Odrediste snimka kamere u toku (FR-081) — TakePicture vraca samo uspeh/neuspeh, ne i sam Uri.
-    private var pendingCameraUri: Uri? = null
-
-    // Snimak forme odmah posle popunjavanja — poredi se sa trenutnim stanjem pri napustanju ekrana.
-    private var initialSnapshot: FormSnapshot? = null
 
     private val galleryPicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) viewModel.onPhotoPicked(uri)
     }
 
     private val cameraCapture = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        val uri = pendingCameraUri
+        val uri = viewModel.pendingCameraUri
         if (success && uri != null) viewModel.onPhotoPicked(uri)
     }
 
@@ -112,11 +102,11 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
         binding.editWarrantyDate.setOnClickListener { pickDate(isWarranty = true) }
 
         binding.editCategory.setOnItemClickListener { _, _, position, _ ->
-            selectedCategoryId = categoriesSnapshot.getOrNull(position)?.id
+            viewModel.selectedCategoryId = categoriesSnapshot.getOrNull(position)?.id
             binding.layoutCategory.error = null
         }
         binding.editLocation.setOnItemClickListener { _, _, position, _ ->
-            selectedLocationId = locationsSnapshot.getOrNull(position)?.id
+            viewModel.selectedLocationId = locationsSnapshot.getOrNull(position)?.id
             binding.layoutLocation.error = null
         }
 
@@ -132,6 +122,7 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
         clearErrorOnEdit(binding.editSeller, binding.layoutSeller)
 
         binding.buttonSave.setOnClickListener { onSaveClicked() }
+        binding.buttonErrorRetry.setOnClickListener { viewModel.retryLoadInitialData() }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -140,21 +131,32 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
                 launch { viewModel.fieldErrors.collect(::renderFieldErrors) }
                 launch { viewModel.saveState.collect(::renderSaveState) }
                 launch { viewModel.pendingImagePath.collect(::renderPhotoPreview) }
+                launch { viewModel.initialDataState.collect(::renderInitialDataState) }
             }
-        }
-
-        // Jednokratno popunjavanje forme (edit rezim) — namerno van repeatOnLifecycle da se ne
-        // ponovi i ne prepise korisnikov unos posle pauze/nastavka aplikacije.
-        viewLifecycleOwner.lifecycleScope.launch {
-            val initial = viewModel.loadInitialData()
-            populateForm(initial)
-            initialSnapshot = currentSnapshot()
-            binding.progressLoading.isVisible = false
-            binding.groupForm.isVisible = true
         }
 
         // Napustanje forme sa nesacuvanim izmenama trazi potvrdu.
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) { handleBackPressed() }
+    }
+
+    // BR-017 — populateForm() se poziva tacno jednom po zivotnom veku ViewModel-a (formPopulated),
+    // ne pri svakom onViewCreated, da rotacija ne prepise korisnikov unos originalnim podacima (tiket 27).
+    private fun renderInitialDataState(state: UiState<AddEditItemViewModel.InitialData>) {
+        binding.progressLoading.isVisible = state is UiState.Loading
+        binding.groupForm.isVisible = state is UiState.Success
+        binding.groupError.isVisible = state is UiState.Error
+
+        when (state) {
+            is UiState.Success -> {
+                if (!viewModel.formPopulated) {
+                    populateForm(state.data)
+                    viewModel.formSnapshot = currentSnapshot()
+                    viewModel.formPopulated = true
+                }
+            }
+            is UiState.Error -> binding.textErrorMessage.text = state.message
+            UiState.Loading, UiState.Empty -> Unit
+        }
     }
 
     private fun clearErrorOnEdit(edit: TextInputEditText, layout: TextInputLayout) {
@@ -177,17 +179,18 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
         val currency = item?.currency ?: initial.defaultCurrency
         binding.editCurrency.setText(currency, false)
 
-        selectedPurchaseDate = item?.purchaseDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-        selectedWarrantyDate = item?.warrantyExpirationDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-        binding.editPurchaseDate.setText(selectedPurchaseDate?.format(dateDisplayFormatter).orEmpty())
-        binding.editWarrantyDate.setText(selectedWarrantyDate?.format(dateDisplayFormatter).orEmpty())
+        viewModel.selectedPurchaseDate = item?.purchaseDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        viewModel.selectedWarrantyDate =
+            item?.warrantyExpirationDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        binding.editPurchaseDate.setText(viewModel.selectedPurchaseDate?.format(dateDisplayFormatter).orEmpty())
+        binding.editWarrantyDate.setText(viewModel.selectedWarrantyDate?.format(dateDisplayFormatter).orEmpty())
 
-        selectedCategoryId = item?.categoryId
-        selectedLocationId = item?.locationId
+        viewModel.selectedCategoryId = item?.categoryId
+        viewModel.selectedLocationId = item?.locationId
         applyCategorySelection()
         applyLocationSelection()
 
-        existingImagePath = item?.imagePath
+        viewModel.existingImagePath = item?.imagePath
         renderPhotoPreview(viewModel.pendingImagePath.value)
 
         // Izmena vec ima popunjene dodatne podatke — sekcija se odmah otvara da korisnik sve vidi.
@@ -221,12 +224,12 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
     }
 
     private fun applyCategorySelection() {
-        val name = categoriesSnapshot.find { it.id == selectedCategoryId }?.name ?: return
+        val name = categoriesSnapshot.find { it.id == viewModel.selectedCategoryId }?.name ?: return
         binding.editCategory.setText(name, false)
     }
 
     private fun applyLocationSelection() {
-        val name = locationsSnapshot.find { it.id == selectedLocationId }?.name ?: return
+        val name = locationsSnapshot.find { it.id == viewModel.selectedLocationId }?.name ?: return
         binding.editLocation.setText(name, false)
     }
 
@@ -260,7 +263,7 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
 
     private fun launchCamera() {
         val uri = viewModel.createCaptureUri()
-        pendingCameraUri = uri
+        viewModel.pendingCameraUri = uri
         cameraCapture.launch(uri)
     }
 
@@ -270,7 +273,7 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
 
     // Novoodabrana fotografija ima prednost nad onom koju predmet vec ima (edit rezim).
     private fun renderPhotoPreview(pendingImagePath: String?) {
-        val fileName = pendingImagePath ?: existingImagePath
+        val fileName = pendingImagePath ?: viewModel.existingImagePath
         if (fileName != null) {
             Glide.with(binding.imagePhotoPreview)
                 .load(photoFile(requireContext(), fileName))
@@ -285,7 +288,7 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
 
     // Datumi se biraju iskljucivo kroz MaterialDatePicker, nikada kucanjem.
     private fun pickDate(isWarranty: Boolean) {
-        val current = if (isWarranty) selectedWarrantyDate else selectedPurchaseDate
+        val current = if (isWarranty) viewModel.selectedWarrantyDate else viewModel.selectedPurchaseDate
         val titleRes = if (isWarranty) {
             R.string.additem_label_warranty_expiration_date
         } else {
@@ -298,11 +301,11 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
             addOnPositiveButtonClickListener { selection ->
                 val date = Instant.ofEpochMilli(selection).atZone(ZoneOffset.UTC).toLocalDate()
                 if (isWarranty) {
-                    selectedWarrantyDate = date
+                    viewModel.selectedWarrantyDate = date
                     binding.editWarrantyDate.setText(date.format(dateDisplayFormatter))
                     binding.layoutWarrantyDate.error = null
                 } else {
-                    selectedPurchaseDate = date
+                    viewModel.selectedPurchaseDate = date
                     binding.editPurchaseDate.setText(date.format(dateDisplayFormatter))
                     binding.layoutPurchaseDate.error = null
                 }
@@ -313,8 +316,8 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
     private fun onSaveClicked() {
         val input = ItemValidator.Input(
             name = binding.editName.text?.toString().orEmpty(),
-            categoryId = selectedCategoryId,
-            locationId = selectedLocationId,
+            categoryId = viewModel.selectedCategoryId,
+            locationId = viewModel.selectedLocationId,
             description = binding.editDescription.text?.toString().orEmpty(),
             manufacturer = binding.editManufacturer.text?.toString().orEmpty(),
             model = binding.editModel.text?.toString().orEmpty(),
@@ -323,8 +326,8 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
             purchasePriceRaw = binding.editPurchasePrice.text?.toString().orEmpty(),
             estimatedValueRaw = binding.editEstimatedValue.text?.toString().orEmpty(),
             currency = binding.editCurrency.text?.toString().orEmpty(),
-            purchaseDate = selectedPurchaseDate,
-            warrantyExpirationDate = selectedWarrantyDate,
+            purchaseDate = viewModel.selectedPurchaseDate,
+            warrantyExpirationDate = viewModel.selectedWarrantyDate,
             seller = binding.editSeller.text?.toString().orEmpty(),
             notes = binding.editNotes.text?.toString().orEmpty()
         )
@@ -366,16 +369,16 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
 
         // FR-030 — po cuvanju korisnik se vraca na listu; forma vraca rezultat pozivajucem ekranu.
         if (state is Resource.Success) {
-            initialSnapshot = null
+            viewModel.formSnapshot = null
             setFragmentResult(RESULT_ITEM_SAVED, bundleOf(RESULT_ITEM_SAVED_ID to state.data))
             findNavController().popBackStack()
         }
     }
 
-    private fun currentSnapshot(): FormSnapshot = FormSnapshot(
+    private fun currentSnapshot(): AddEditItemViewModel.FormSnapshot = AddEditItemViewModel.FormSnapshot(
         name = binding.editName.text?.toString().orEmpty(),
-        categoryId = selectedCategoryId,
-        locationId = selectedLocationId,
+        categoryId = viewModel.selectedCategoryId,
+        locationId = viewModel.selectedLocationId,
         description = binding.editDescription.text?.toString().orEmpty(),
         manufacturer = binding.editManufacturer.text?.toString().orEmpty(),
         model = binding.editModel.text?.toString().orEmpty(),
@@ -384,15 +387,15 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
         purchasePrice = binding.editPurchasePrice.text?.toString().orEmpty(),
         estimatedValue = binding.editEstimatedValue.text?.toString().orEmpty(),
         currency = binding.editCurrency.text?.toString().orEmpty(),
-        purchaseDate = selectedPurchaseDate,
-        warrantyExpirationDate = selectedWarrantyDate,
+        purchaseDate = viewModel.selectedPurchaseDate,
+        warrantyExpirationDate = viewModel.selectedWarrantyDate,
         seller = binding.editSeller.text?.toString().orEmpty(),
         notes = binding.editNotes.text?.toString().orEmpty(),
         photoChanged = viewModel.pendingImagePath.value != null
     )
 
     private fun handleBackPressed() {
-        val initial = initialSnapshot
+        val initial = viewModel.formSnapshot
         if (initial == null || initial == currentSnapshot()) {
             findNavController().popBackStack()
             return
@@ -413,23 +416,4 @@ class AddEditItemFragment : Fragment(R.layout.fragment_add_edit_item) {
         super.onDestroyView()
         _binding = null
     }
-
-    private data class FormSnapshot(
-        val name: String,
-        val categoryId: String?,
-        val locationId: String?,
-        val description: String,
-        val manufacturer: String,
-        val model: String,
-        val serialNumber: String,
-        val quantity: String,
-        val purchasePrice: String,
-        val estimatedValue: String,
-        val currency: String,
-        val purchaseDate: LocalDate?,
-        val warrantyExpirationDate: LocalDate?,
-        val seller: String,
-        val notes: String,
-        val photoChanged: Boolean
-    )
 }

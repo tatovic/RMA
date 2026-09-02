@@ -36,8 +36,8 @@ import rs.homeinventory.app.util.chartCategoryColors
 import rs.homeinventory.app.util.warrantyStatusColorRes
 import rs.homeinventory.app.util.warrantyStatusLabelRes
 
-// SCR-08 — cita iskljucivo iz Room-a (FR-078); tri stanja (Loading/Success/Empty), Error se ovde
-// nikad ne emituje jer nema mreznog poziva o cijem neuspehu ekran mora da izvesti (tiket 23).
+// SCR-08 — cita iskljucivo iz Room-a (FR-078); sva cetiri stanja iz BR-017. Error je odbrambeno
+// stanje (Room citanje/obrada normalno ne baca) dodato u tiketu 27, ne redovan put kao kod mreznih ekrana.
 @AndroidEntryPoint
 class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
 
@@ -50,6 +50,8 @@ class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentStatisticsBinding.bind(view)
 
+        binding.buttonErrorRetry.setOnClickListener { viewModel.retry() }
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { viewModel.state.collect(::render) }
@@ -61,8 +63,13 @@ class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
         binding.progressLoading.isVisible = state is UiState.Loading
         binding.scrollContent.isVisible = state is UiState.Success
         binding.groupEmpty.isVisible = state is UiState.Empty
+        binding.groupError.isVisible = state is UiState.Error
 
-        if (state is UiState.Success) renderContent(state.data)
+        when (state) {
+            is UiState.Success -> renderContent(state.data)
+            is UiState.Error -> binding.textErrorMessage.text = state.message
+            UiState.Loading, UiState.Empty -> Unit
+        }
     }
 
     private fun renderContent(data: StatisticsUi) {

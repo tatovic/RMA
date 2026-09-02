@@ -52,6 +52,13 @@ android {
             isReturnDefaultValues = true
         }
     }
+
+    sourceSets {
+        // MigrationTestHelper cita izvezene JSON seme kao asset (tiket 27, vidi MigrationTest).
+        getByName("androidTest") {
+            assets.srcDirs("$projectDir/schemas")
+        }
+    }
 }
 
 kotlin {

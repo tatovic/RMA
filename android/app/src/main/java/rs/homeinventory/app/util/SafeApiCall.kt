@@ -47,9 +47,35 @@ private fun <T> unitSuccess(): Resource<T> = Resource.Success(Unit as T)
 // Cita telo greske sa servera i prevodi njegov kod u poruku iz kataloga (prd.md sekcija 10).
 private fun <T> parseErrorBody(response: Response<T>, errorMessageProvider: ErrorMessageProvider): Resource<T> {
     val rawBody = runCatching { response.errorBody()?.string() }.getOrNull()
-    val serverCode = rawBody?.let {
-        runCatching { errorBodyGson.fromJson(it, ErrorResponseDto::class.java).error.code }.getOrNull()
+    val errorBody = rawBody?.let {
+        runCatching { errorBodyGson.fromJson(it, ErrorResponseDto::class.java).error }.getOrNull()
     }
-    val errorCode = ErrorCode.fromServerCode(serverCode)
-    return Resource.Error(errorCode, errorMessageProvider.message(errorCode))
+    val errorCode = ErrorCode.fromServerCode(errorBody?.code)
+    val message = when (errorCode) {
+        // CATEGORY_IN_USE/LOCATION_IN_USE nose broj predmeta u details.itemCount (backend/src/utils/errorCodes.js);
+        // 0 je bezbedan fallback ako telo greske ne moze da se parsira (ERR-02/NFR-11, poruka se ne rusi).
+        ErrorCode.CATEGORY_IN_USE, ErrorCode.LOCATION_IN_USE -> {
+            val itemCount = runCatching {
+                errorBody?.details?.asJsonObject?.get("itemCount")?.asInt
+            }.getOrNull() ?: 0
+            errorMessageProvider.message(errorCode, itemCount)
+        }
+        // prd.md sekcija 10 — VALIDATION_ERROR "se prikazuje po poljima iz details" (validate.js salje
+        // vec lokalizovanu poruku po polju). Klijentski validatori (VR-01..VR-20) hvataju skoro sve pre
+        // slanja; ovo je odbrambeni fallback za ono sto oni ne pokriju identicno kao server.
+        ErrorCode.VALIDATION_ERROR -> {
+            val fieldMessages = runCatching {
+                errorBody?.details?.asJsonArray?.mapNotNull { entry ->
+                    entry.asJsonObject.get("message")?.asString
+                }
+            }.getOrNull()?.filter { it.isNotBlank() }
+            if (fieldMessages.isNullOrEmpty()) {
+                errorMessageProvider.message(errorCode)
+            } else {
+                fieldMessages.joinToString(separator = "\n")
+            }
+        }
+        else -> errorMessageProvider.message(errorCode)
+    }
+    return Resource.Error(errorCode, message)
 }

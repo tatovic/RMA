@@ -13,8 +13,11 @@ import java.net.UnknownHostException
 
 class SafeApiCallTest {
 
-    // Vraca kod kao poruku radi jednostavne provere u testovima (ERR-02 se testira odvojeno kroz AndroidErrorMessageProvider).
-    private val messages = ErrorMessageProvider { code -> code.name }
+    // Vraca kod (i eventualne format argumente) kao poruku radi jednostavne provere u testovima
+    // (ERR-02 se testira odvojeno kroz AndroidErrorMessageProvider).
+    private val messages = ErrorMessageProvider { code, formatArgs ->
+        if (formatArgs.isEmpty()) code.name else "${code.name}:${formatArgs.joinToString(",")}"
+    }
 
     private fun errorBody(json: String) = json.toResponseBody("application/json".toMediaType())
 
@@ -66,6 +69,52 @@ class SafeApiCallTest {
         val result = safeApiCall<String>(messages) { Response.error(400, body) }
 
         assertEquals(ErrorCode.UNKNOWN, (result as Resource.Error).code)
+    }
+
+    @Test
+    fun `CATEGORY_IN_USE prosledjuje broj predmeta iz details polja (prd md sekcija 10, {n} predmeta)`() = runTest {
+        val body = errorBody(
+            """{"error":{"code":"CATEGORY_IN_USE","message":"…","details":{"itemCount":7}}}"""
+        )
+
+        val result = safeApiCall<String>(messages) { Response.error(409, body) }
+
+        assertEquals(Resource.Error(ErrorCode.CATEGORY_IN_USE, "CATEGORY_IN_USE:7"), result)
+    }
+
+    @Test
+    fun `CATEGORY_IN_USE bez citljivog details polja pada na 0 umesto da baci izuzetak`() = runTest {
+        val body = errorBody("""{"error":{"code":"CATEGORY_IN_USE","message":"…"}}""")
+
+        val result = safeApiCall<String>(messages) { Response.error(409, body) }
+
+        assertEquals(Resource.Error(ErrorCode.CATEGORY_IN_USE, "CATEGORY_IN_USE:0"), result)
+    }
+
+    @Test
+    fun `VALIDATION_ERROR prikazuje poruke po poljima iz details (prd md sekcija 10)`() = runTest {
+        val body = errorBody(
+            """{"error":{"code":"VALIDATION_ERROR","message":"Neispravni podaci","details":[
+                {"field":"name","message":"Naziv je obavezan"},
+                {"field":"categoryId","message":"Kategorija je obavezna"}
+            ]}}"""
+        )
+
+        val result = safeApiCall<String>(messages) { Response.error(400, body) }
+
+        assertEquals(
+            Resource.Error(ErrorCode.VALIDATION_ERROR, "Naziv je obavezan\nKategorija je obavezna"),
+            result
+        )
+    }
+
+    @Test
+    fun `VALIDATION_ERROR bez citljivog details polja pada na generalnu poruku iz kataloga`() = runTest {
+        val body = errorBody("""{"error":{"code":"VALIDATION_ERROR","message":"Neispravni podaci"}}""")
+
+        val result = safeApiCall<String>(messages) { Response.error(400, body) }
+
+        assertEquals(Resource.Error(ErrorCode.VALIDATION_ERROR, "VALIDATION_ERROR"), result)
     }
 
     @Test

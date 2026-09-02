@@ -45,6 +45,7 @@ class LocationsFragment : Fragment(R.layout.fragment_locations) {
 
         binding.fabAddLocation.setOnClickListener { showAddDialog() }
         binding.buttonEmptyAction.setOnClickListener { showAddDialog() }
+        binding.buttonErrorRetry.setOnClickListener { viewModel.retry() }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -58,8 +59,13 @@ class LocationsFragment : Fragment(R.layout.fragment_locations) {
         binding.progressLoading.isVisible = state is UiState.Loading
         binding.recyclerLocations.isVisible = state is UiState.Success
         binding.groupEmpty.isVisible = state is UiState.Empty
+        binding.groupError.isVisible = state is UiState.Error
 
-        if (state is UiState.Success) adapter.submitList(state.data)
+        when (state) {
+            is UiState.Success -> adapter.submitList(state.data)
+            is UiState.Error -> binding.textErrorMessage.text = state.message
+            UiState.Loading, UiState.Empty -> Unit
+        }
     }
 
     private fun renderDeleteState(state: Resource<Unit>?) {

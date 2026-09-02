@@ -27,7 +27,7 @@
         android:id="@+id/statisticsFragment"
         android:name="rs.homeinventory.app.presentation.statistics.StatisticsFragment"
         android:label="@string/nav_statistics"
-        tools:layout="@layout/fragment_placeholder" />
+        tools:layout="@layout/fragment_statistics" />
 
     <fragment
         android:id="@+id/profileFragment"

@@ -52,6 +52,8 @@ class ItemDetailsFragment : Fragment(R.layout.fragment_item_details) {
             )
         }
         binding.buttonDelete.setOnClickListener { confirmDelete() }
+        // NOT_FOUND (BR-007) nije stanje iz kog ima smisla "Pokusaj ponovo" — predmet je obrisan/ne postoji.
+        binding.buttonErrorBack.setOnClickListener { requireActivity().finish() }
 
         // Forma za izmenu vraca rezultat ovde (tiket 15) — kratka potvrda korisniku.
         setFragmentResultListener(RESULT_ITEM_SAVED) { _, _ ->

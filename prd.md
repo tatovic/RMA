@@ -690,21 +690,21 @@ Ova lista se proverava pre predaje. Svaka stavka odgovara zahtevu iz sekcije 44 
 
 | # | Projektni zahtev | Gde je ispunjen | Status |
 |---|---|---|:--:|
-| 1 | Najmanje 3 aktivnosti | ACT-1 do ACT-4 (četiri) | [ ] |
-| 2 | Navigacija između aktivnosti | Auth → Main → ItemDetails → Admin | [ ] |
-| 3 | Prenos podataka između aktivnosti | `itemId` kroz Intent extra (BR-007) | [ ] |
-| 4 | Smislen UI/UX | Material 3, četiri stanja po ekranu (BR-017) | [ ] |
-| 5 | Lokalno skladištenje podataka | Room baza + DataStore | [ ] |
-| 6 | Eksterni API | `open.er-api.com` za kursnu listu | [ ] |
-| 7 | Asinhrona komunikacija sa API-jem | Retrofit `suspend` funkcije | [ ] |
-| 8 | Kotlin Coroutines | `viewModelScope`, `Flow`, `Dispatchers.IO` | [ ] |
-| 9 | CRUD operacije | FR-020 do FR-030 | [ ] |
-| 10 | Fragmenti gde logika to opravdava | SCR-01 do SCR-13 (trinaest fragmenata) | [ ] |
-| 11 | Komunikacija između fragmenata | Deljeni ViewModel + Fragment Result API | [ ] |
-| 12 | Pretraga | FR-031, šest polja | [ ] |
-| 13 | Autentifikacija | JWT + BCrypt, FR-001 do FR-019 | [ ] |
-| 14 | Role korisnika | USER i ADMIN, matrica u sekciji 4 | [ ] |
-| 15 | Rad sa većom količinom podataka | Seed od ~60 predmeta, lista testirana na 500 | [ ] |
+| 1 | Najmanje 3 aktivnosti | ACT-1 do ACT-4 (četiri: `MainActivity`, `AuthenticationActivity`, `ItemDetailsActivity`, `AdminActivity`) | [x] |
+| 2 | Navigacija između aktivnosti | Auth → Main → ItemDetails → Admin, provereno uživo na emulatoru (tiket 27) | [x] |
+| 3 | Prenos podataka između aktivnosti | `itemId` kroz Intent extra (BR-007), `exported="false"` | [x] |
+| 4 | Smislen UI/UX | Material 3, četiri stanja po ekranu (BR-017) — poliranje u tiketu 27 (ikonice, dodatna Error/Empty stanja) | [x] |
+| 5 | Lokalno skladištenje podataka | Room baza (sa pravom migracijom, tiket 27) + DataStore | [x] |
+| 6 | Eksterni API | `open.er-api.com` za kursnu listu | [x] |
+| 7 | Asinhrona komunikacija sa API-jem | Retrofit `suspend` funkcije | [x] |
+| 8 | Kotlin Coroutines | `viewModelScope`, `Flow`, `Dispatchers.IO` | [x] |
+| 9 | CRUD operacije | FR-020 do FR-030 | [x] |
+| 10 | Fragmenti gde logika to opravdava | SCR-01 do SCR-13 (trinaest fragmenata, prebrojano u tiketu 27) | [x] |
+| 11 | Komunikacija između fragmenata | Deljeni ViewModel + Fragment Result API | [x] |
+| 12 | Pretraga | FR-031, šest polja | [x] |
+| 13 | Autentifikacija | JWT + BCrypt, FR-001 do FR-019 | [x] |
+| 14 | Role korisnika | USER i ADMIN, matrica u sekciji 4 | [x] |
+| 15 | Rad sa većom količinom podataka | Seed od ~60 predmeta; lista stvarno testirana na 513 predmeta na emulatoru, `dumpsys gfxinfo` pokazuje 1.01% janky frames (tiket 27) | [x] |
 
 ## 15. Van opsega
 
@@ -785,9 +785,9 @@ Legenda statusa u koloni **Gotovo**: `[ ]` nije počet ili je u toku, `[x]` zavr
 | 24 | Administratorski deo API-ja | 7 | [x] | 2026-09-01 | 691b170 | ručno provereno preko API poziva (curl) uz pravi backend/MySQL: `/api/admin/stats` i `/api/admin/users` vraćaju tačne brojeve (4 korisnika, 60 predmeta, 11 kategorija) i listu bez sadržaja tuđeg inventara (OWN-06); PATCH statusa deaktivira nalog i deaktivirani nalog odmah gubi pristup i sa još važećim tokenom (403 ACCOUNT_DEACTIVATED); pokušaj samodeaktivacije vraća 409 CANNOT_DEACTIVATE_SELF; sva tri endpointa vraćaju 403 za rolu USER (FR-106). Test nalog vraćen u prvobitno stanje (USER) posle provere |
 | 25 | Administratorski ekrani | 7 | [x] | 2026-09-01 | 14d0dc5 | ručno provereno na emulatoru (Pixel6_API36) uz pravi backend: FR-100 dugme „Administracija" vidljivo samo administratorskom nalogu, sakriveno za obicnog korisnika; pregled sistema tacne brojeve (6 registrovanih/4 aktivna/2 deaktivirana, 60 predmeta, 11 kategorija); spisak korisnika prikazuje ime/email/rolu/status/broj predmeta bez ikakvog sadrzaja tudjeg inventara (OWN-06/BR-002); BR-008 dijalog potvrde pre svake promene statusa; samodeaktivacija blokirana odmah uz poruku bez mreznog poziva; deaktiviran test nalog stvarno ne moze da se prijavi (poruka "Vas nalog je deaktiviran"), proveren na uredjaju; kategorije — dodavanje, VR duplikat naziva (409 sa servera), preimenovanje, blokirano brisanje kategorije u upotrebi sa tacnim brojem predmeta ("Vozila", 3 predmeta), uspesno brisanje neiskoriscene kategorije. Test nalozi vraceni u prvobitno stanje (aktivni) posle provere. Usput otkriven i ispravljen bag van prvobitnog opisa: FAB za dodavanje kategorije je bio vizuelno i funkcionalno sakriven iza donje navigacije u AdminActivity jer, za razliku od MainActivity, nije primenjivana dinamicka donja margina sadrzaja — dodato u AdminActivity.kt |
 | 26 | Puna sinhronizacija i offline rad | 7 | [x] | 2026-09-01 | 59e159d | ručno provereno na emulatoru (Pixel6_API36) uz pravi backend/MySQL preko adb (uiautomator + screencap, ne samo pregled koda): nov test nalog, dva predmeta sačuvana online i odmah potvrđena u MySQL; avionski režim uključen preko `cmd connectivity airplane-mode enable`, pa offline izmena cene postojećeg predmeta (PENDING_UPDATE, ikonica čekanja FR-096 vidljiva u listi), brisanje drugog postojećeg predmeta (PENDING_DELETE), kreiranje i odmah brisanje trećeg — nikad poslatog — predmeta (DB-RULE-03) i kreiranje četvrtog novog predmeta (PENDING_CREATE); MySQL u tom trenutku i dalje pokazuje staro stanje, potvrđujući da offline rad ne blokira i ne šalje ništa preuranjeno (FR-097). Mreža vraćena, povlačenje liste nadole pokrenulo sinhronizaciju (FR-094) i sve ikonice čekanja odmah nestale; MySQL posle sync-a pokazuje tačnu novu cenu izmenjenog predmeta, `deleted_at` postavljen na obrisanom, novi predmet upisan, a predmet kreiran-pa-obrisan offline nikad nije ni stigao na server — DB-RULE-03 potvrđeno na stvarnoj bazi, ne samo pregledom koda. FR-009 posebno proveren: brisanje korisničkog reda direktno iz MySQL (simulacija nevažećeg tokena) izazvalo je 401 na sledećem pozivu; aplikacija je sama obrisala sesiju i lokalnu Room bazu i vratila korisnika na ekran Prijave bez ikakve interakcije korisnika. Dodato i instrumented testovi u `ItemDaoTest` (10/10 prošlo na istom uređaju) koji pokrivaju DB-RULE-03 na nivou `softDelete`/`undoDelete` upita. Test nalog i predmeti uklonjeni iz MySQL posle provere (kaskadno) |
-| 27 | Poliranje i provera projektnih zahteva | 7 | [ ] | | | |
+| 27 | Poliranje i provera projektnih zahteva | 7 | [x] | 2026-09-02 | TBD | ručno provereno na emulatoru (Pixel6_API36) uz pravi backend/MySQL: dodate ikonice na svim prazno/greška stanjima, dodata Error stanja na Lokacije/Statistika, popravljen stvaran bug gubitka unosa pri rotaciji na formi za dodavanje/izmenu predmeta (stanje premešteno u ViewModel, uživo potvrđeno rotacijom), dodata i testirana prava Room migracija (`MIGRATION_1_2`, indeks za NFR-01) sa `MigrationTest` na uređaju, tamna tema proverena na svih 13 fragmenata uključujući grafikone, lista testirana na 513 predmeta (`dumpsys gfxinfo`, 1.01% janky frames), CATEGORY_IN_USE/LOCATION_IN_USE sada nose stvaran broj predmeta a VALIDATION_ERROR stvarne poruke po polju (oboje pokriveno `SafeApiCallTest`), potvrđeno da nema hardkodovanog teksta, da mrežno logovanje ne radi u release build-u i da nijedan upit na serveru ne radi bez provere vlasnika. Test podaci i test admin nalog uklonjeni posle provere, demo nalog vraćen na zvaničnu seed vrednost |
 
-**Napredak: 26 / 27**
+**Napredak: 27 / 27**
 
 Agent koji završi tiket ažurira i ovaj brojač.
 

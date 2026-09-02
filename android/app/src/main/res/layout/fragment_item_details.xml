@@ -170,6 +170,13 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:visibility="visible">
 
+        <ImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginBottom="@dimen/auth_field_spacing"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_state_error" />
+
         <TextView
             android:id="@+id/textErrorMessage"
             android:layout_width="wrap_content"
@@ -177,6 +184,13 @@
             android:gravity="center"
             android:textAppearance="?attr/textAppearanceBodyLarge"
             tools:text="@string/error_not_found" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonErrorBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:text="@string/action_back" />
 
     </LinearLayout>
 

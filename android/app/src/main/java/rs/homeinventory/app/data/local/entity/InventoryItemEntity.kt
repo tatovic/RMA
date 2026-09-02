@@ -13,7 +13,10 @@ import rs.homeinventory.app.data.local.SyncStatus
         Index(value = ["categoryId"]),
         Index(value = ["locationId"]),
         Index(value = ["userId", "warrantyExpirationDate"]),
-        Index(value = ["syncStatus"])
+        Index(value = ["syncStatus"]),
+        // NFR-01 (tiket 27) — svaki upit za listu inventara filtrira po userId i sortira po createdAt
+        // (ItemDao); ovaj indeks pokriva bas tu kombinaciju umesto pune tabelarne pretrage na 500+ redova.
+        Index(value = ["userId", "createdAt"])
     ],
     foreignKeys = [
         ForeignKey(

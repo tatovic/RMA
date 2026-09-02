@@ -7,6 +7,7 @@ import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -26,23 +27,28 @@ import rs.homeinventory.app.domain.model.WarrantyStatus
 import rs.homeinventory.app.domain.util.CurrencyConverter
 import rs.homeinventory.app.domain.util.MoneyFormatter
 import rs.homeinventory.app.domain.util.WarrantyCalculator
+import rs.homeinventory.app.util.ErrorCode
+import rs.homeinventory.app.util.ErrorMessageProvider
 import rs.homeinventory.app.util.Resource
 import rs.homeinventory.app.util.UiState
 import rs.homeinventory.app.util.WARRANTY_THRESHOLD_DEFAULT_DAYS
 import javax.inject.Inject
 
 // SCR-08 — kao Dashboard, ekran cita iskljucivo iz Room-a (FR-078); jedini asinhroni poziv je kursna
-// lista, i ona pada na lokalni kes bez interneta (CurrencyRepository), pa ekran nema Error stanje.
+// lista, i ona pada na lokalni kes bez interneta (CurrencyRepository). BR-017 Error stanje je odbrambeno
+// (Room citanje/obrada normalno ne baca) — pokriva NFR-11 ako se ipak nesto neocekivano desi (tiket 27).
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
     private val itemRepository: ItemRepository,
     private val currencyRepository: CurrencyRepository,
     private val warrantyPreferences: WarrantyPreferences,
-    authRepository: AuthRepository
+    authRepository: AuthRepository,
+    private val errorMessageProvider: ErrorMessageProvider
 ) : ViewModel() {
 
     private val currentUser = authRepository.currentUser.filterNotNull()
+    private val retryTrigger = MutableStateFlow(0)
 
     private val aggregates: StateFlow<List<CategoryAggregate>> = currentUser
         .flatMapLatest { itemRepository.observeCategoryAggregates(it.id) }
@@ -61,15 +67,22 @@ class StatisticsViewModel @Inject constructor(
     val state: StateFlow<UiState<StatisticsUi>> = combine(
         combine(currentUser, aggregates, rates, ::Triple),
         allItems,
-        warrantyThreshold
-    ) { base, items, threshold ->
+        warrantyThreshold,
+        retryTrigger
+    ) { base, items, threshold, _ ->
         val (user, categoryAggregates, rateMap) = base
         if (categoryAggregates.isEmpty()) {
             UiState.Empty
         } else {
             UiState.Success(buildStatisticsUi(user, categoryAggregates, items, rateMap, threshold))
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Loading)
+    }
+        .catch { emit(UiState.Error(errorMessageProvider.message(ErrorCode.UNKNOWN))) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Loading)
+
+    fun retry() {
+        retryTrigger.value++
+    }
 
     init {
         // Zaseban coroutine — kursna lista se povlaci nezavisno, ekran radi i dok ona jos ne stigne

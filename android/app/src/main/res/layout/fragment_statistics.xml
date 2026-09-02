@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- SCR-08 — statistika sa grafikonima (tiket 23); cita iskljucivo iz Room-a (FR-078), bez Error stanja
-     jer nema mreznog poziva koji moze da padne bez lokalnog kesa da ga zameni (BR-013 se resava kroz
-     unconvertedAmounts, ne kroz ekran greske). -->
+<!-- SCR-08 — statistika sa grafikonima (tiket 23); cita iskljucivo iz Room-a (FR-078). BR-013 (kurs
+     nedostupan) se resava kroz unconvertedAmounts, ne kroz ekran greske. Error grupa ispod je
+     odbrambeno BR-017 stanje dodato u tiketu 27 za neocekivane izuzetke iz Room-a/obrade. -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -270,6 +270,13 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:visibility="visible">
 
+        <ImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginBottom="@dimen/auth_field_spacing"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_state_empty" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -283,6 +290,44 @@
             android:gravity="center"
             android:text="@string/statistics_empty_message"
             android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/groupError"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="@dimen/auth_screen_padding"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible">
+
+        <ImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginBottom="@dimen/auth_field_spacing"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_state_error" />
+
+        <TextView
+            android:id="@+id/textErrorMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            tools:text="@string/error_unknown" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonErrorRetry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:text="@string/dashboard_error_retry_action" />
 
     </LinearLayout>
 

@@ -24,9 +24,13 @@ import rs.homeinventory.app.data.local.entity.LocationEntity
 import rs.homeinventory.app.data.remote.mapper.DateMapper
 import rs.homeinventory.app.data.repository.AuthRepository
 import rs.homeinventory.app.data.repository.ItemRepository
+import rs.homeinventory.app.util.ErrorCode
+import rs.homeinventory.app.util.ErrorMessageProvider
 import rs.homeinventory.app.util.ItemValidator
 import rs.homeinventory.app.util.PhotoStorage
 import rs.homeinventory.app.util.Resource
+import rs.homeinventory.app.util.UiState
+import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 
@@ -37,6 +41,7 @@ class AddEditItemViewModel @Inject constructor(
     private val itemRepository: ItemRepository,
     private val authRepository: AuthRepository,
     private val photoStorage: PhotoStorage,
+    private val errorMessageProvider: ErrorMessageProvider,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -63,6 +68,47 @@ class AddEditItemViewModel @Inject constructor(
     private val _pendingImagePath = MutableStateFlow<String?>(null)
     val pendingImagePath: StateFlow<String?> = _pendingImagePath.asStateFlow()
 
+    // NFR-04 (tiket 27) — polja forme koja nisu obican tekst (pa ih Android sam ne cuva kroz
+    // rotaciju preko view state-a) zive ovde, u ViewModel-u koji rotaciju preživljava nepromenjen;
+    // Fragment ih cita/pise direktno umesto da ih drzi kao sopstvena polja koja rotacija brise.
+    var selectedCategoryId: String? = null
+    var selectedLocationId: String? = null
+    var selectedPurchaseDate: LocalDate? = null
+    var selectedWarrantyDate: LocalDate? = null
+    var existingImagePath: String? = null
+    var pendingCameraUri: Uri? = null
+    var formSnapshot: FormSnapshot? = null
+
+    // Sprecava da se forma ponovo popuni iznad korisnikovog unosa posle rotacije — populateForm()
+    // sme da se pozove tacno jednom po otvaranju ekrana, ne pri svakom onViewCreated.
+    var formPopulated: Boolean = false
+
+    // BR-017 — ucitavanje pocetnih podataka (edit rezim cita postojeci predmet iz Room-a) sada je
+    // deo ViewModel-a, pokrenuto tacno jednom u init{}, da rotacija ne ponavlja poziv niti gubi stanje.
+    private val _initialDataState = MutableStateFlow<UiState<InitialData>>(UiState.Loading)
+    val initialDataState: StateFlow<UiState<InitialData>> = _initialDataState.asStateFlow()
+
+    init {
+        loadInitialData()
+    }
+
+    fun retryLoadInitialData() = loadInitialData()
+
+    private fun loadInitialData() {
+        viewModelScope.launch {
+            _initialDataState.value = UiState.Loading
+            val result = runCatching {
+                val user = currentUser.first()
+                val existing = itemId?.let { itemRepository.getItem(it) }
+                InitialData(existingItem = existing, defaultCurrency = user.currency)
+            }
+            _initialDataState.value = result.fold(
+                onSuccess = { UiState.Success(it) },
+                onFailure = { UiState.Error(errorMessageProvider.message(ErrorCode.UNKNOWN)) }
+            )
+        }
+    }
+
     // Korisnik je izabrao novu fotografiju (kamera ili galerija); odmah se smanjuje, kompresuje i
     // kopira u privatni prostor aplikacije. Zamena unutar iste sesije brise prethodno odabrani fajl
     // da se ne gomilaju (isti duh kao FR-086).
@@ -84,14 +130,6 @@ class AddEditItemViewModel @Inject constructor(
 
     // FR-081 — privremeni fajl u koji aplikacija kamere upisuje snimak (deljen preko FileProvider-a).
     fun createCaptureUri(): Uri = photoStorage.createCaptureUri()
-
-    // Ucitava se tacno jednom pri otvaranju ekrana da bi popunio formu (edit rezim) — ne StateFlow,
-    // da izmene korisnika kasnije (npr. posle pauze aplikacije) ne budu prepisane ponovnom emisijom.
-    suspend fun loadInitialData(): InitialData {
-        val user = currentUser.first()
-        val existing = itemId?.let { itemRepository.getItem(it) }
-        return InitialData(existingItem = existing, defaultCurrency = user.currency)
-    }
 
     fun save(input: ItemValidator.Input) {
         if (_saveState.value is Resource.Loading) return
@@ -147,4 +185,25 @@ class AddEditItemViewModel @Inject constructor(
     }
 
     data class InitialData(val existingItem: InventoryItemEntity?, val defaultCurrency: String)
+
+    // Snimak forme odmah posle popunjavanja — Fragment ga poredi sa trenutnim stanjem pri napustanju
+    // ekrana (BR-008 duh: potvrda pre odbacivanja nesacuvanih izmena). Zivi ovde da preživi rotaciju.
+    data class FormSnapshot(
+        val name: String,
+        val categoryId: String?,
+        val locationId: String?,
+        val description: String,
+        val manufacturer: String,
+        val model: String,
+        val serialNumber: String,
+        val quantity: String,
+        val purchasePrice: String,
+        val estimatedValue: String,
+        val currency: String,
+        val purchaseDate: LocalDate?,
+        val warrantyExpirationDate: LocalDate?,
+        val seller: String,
+        val notes: String,
+        val photoChanged: Boolean
+    )
 }

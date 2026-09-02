@@ -37,6 +37,11 @@ class ProfileViewModel @Inject constructor(
     private val _currencyUpdateError = MutableStateFlow<String?>(null)
     val currencyUpdateError: StateFlow<String?> = _currencyUpdateError.asStateFlow()
 
+    // BR-017/prd.md sekcija 11 — indikator dok promena valute putuje na server; dropdown se u
+    // medjuvremenu onemogucava da se sprovede dvostruko slanje (tiket 27).
+    private val _isSavingCurrency = MutableStateFlow(false)
+    val isSavingCurrency: StateFlow<Boolean> = _isSavingCurrency.asStateFlow()
+
     // FR-051/FR-052 — prag "garancija uskoro istice", cetiri ponudjene vrednosti, cuva se u DataStore (tiket 22).
     val warrantyThresholdOptions: List<Int> = WARRANTY_THRESHOLD_OPTIONS
 
@@ -58,12 +63,14 @@ class ProfileViewModel @Inject constructor(
     // Promena valute prikaza odmah preracunava sve zbirove u aplikaciji jer svi ekrani citaju
     // valutu iz istog User.currency polja u Room-u (currentUser flow).
     fun updateCurrency(currency: String) {
-        if (currency == user.value?.currency) return
+        if (currency == user.value?.currency || _isSavingCurrency.value) return
         viewModelScope.launch {
+            _isSavingCurrency.value = true
             when (val result = authRepository.updateCurrency(currency)) {
                 is Resource.Error -> _currencyUpdateError.value = result.message
                 else -> Unit
             }
+            _isSavingCurrency.value = false
         }
     }
 }

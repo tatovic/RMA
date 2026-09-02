@@ -13,8 +13,8 @@
     <string name="error_email_already_exists">Nalog sa ovom email adresom već postoji.</string>
     <string name="error_category_name_taken">Kategorija sa ovim nazivom već postoji.</string>
     <string name="error_location_name_taken">Lokacija sa ovim nazivom već postoji.</string>
-    <string name="error_category_in_use">Kategorija se koristi kod predmeta i ne može se obrisati.</string>
-    <string name="error_location_in_use">Lokacija se koristi kod predmeta i ne može se obrisati.</string>
+    <string name="error_category_in_use">Kategorija se koristi kod %1$d predmeta i ne može se obrisati.</string>
+    <string name="error_location_in_use">Lokacija se koristi kod %1$d predmeta i ne može se obrisati.</string>
     <string name="error_cannot_deactivate_self">Ne možete deaktivirati sopstveni nalog.</string>
     <string name="error_sync_conflict">Podatak je izmenjen na drugom uređaju.</string>
     <string name="error_wrong_current_password">Trenutna lozinka nije tačna.</string>
@@ -25,6 +25,9 @@
     <string name="error_server_unavailable">Server trenutno nije dostupan.</string>
     <string name="error_currency_unavailable">Kurs trenutno nije dostupan.</string>
     <string name="error_unknown">Došlo je do greške. Pokušajte ponovo.</string>
+
+    <!-- BR-017 stanje greske — zajednicki tekstovi za dugmad kad "Pokusaj ponovo" nije primenljivo (tiket 27). -->
+    <string name="action_back">Nazad</string>
 
     <!-- Klijentska validacija forme registracije — prd.md sekcija 9, VR-01 do VR-05 (tiket 11). -->
     <string name="error_vr_name">Ime mora imati najmanje 2 znaka</string>
@@ -256,6 +259,7 @@
 
     <!-- SCR-12 Spisak korisnika — tiket 25. -->
     <string name="admin_users_empty_title">Nema registrovanih korisnika</string>
+    <string name="admin_users_empty_message">Novi korisnici se ovde pojavljuju čim se registruju u aplikaciji.</string>
     <string name="admin_users_activate_dialog_title">Aktivacija naloga</string>
     <string name="admin_users_activate_dialog_message">Da li želite da aktivirate nalog „%1$s"?</string>
     <string name="admin_users_deactivate_dialog_title">Deaktivacija naloga</string>
@@ -269,6 +273,7 @@
     <string name="admin_categories_action_delete">Obriši</string>
     <string name="admin_categories_label_name">Naziv</string>
     <string name="admin_categories_empty_title">Nema definisanih kategorija</string>
+    <string name="admin_categories_empty_message">Predmeti ne mogu da se svrstaju u kategorije dok ne dodate bar jednu.</string>
     <string name="admin_categories_empty_action">Dodaj kategoriju</string>
     <string name="admin_categories_dialog_add_title">Nova kategorija</string>
     <string name="admin_categories_dialog_edit_title">Preimenovanje kategorije</string>

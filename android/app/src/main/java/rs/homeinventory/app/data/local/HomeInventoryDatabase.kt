@@ -27,7 +27,7 @@ import rs.homeinventory.app.data.local.entity.UserEntity
         ExchangeRateEntity::class,
         SyncMetadataEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

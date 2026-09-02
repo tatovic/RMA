@@ -4,20 +4,20 @@
 
 **Blocked by:** 26 — Puna sinhronizacija i offline rad.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Svaki ekran ima sva četiri stanja iz BR-017: učitavanje, sadržaj, prazno i greška
-- [ ] Svako prazno stanje ima ikonicu, objašnjenje i poziv na akciju
-- [ ] Svako stanje greške ima razumljivu poruku i dugme za ponovni pokušaj
-- [ ] Nijedna poruka korisniku ne sadrži tekst izuzetka ni stack trace (ERR-03)
-- [ ] Sve poruke o greškama su prevedene po katalogu iz prd.md sekcija 10
-- [ ] Indikator učitavanja postoji na svim operacijama iz prd.md sekcija 11, uz onemogućeno dugme
-- [ ] Nijedan tekst vidljiv korisniku nije hardkodovan; sve je u resursima (NFR-09)
-- [ ] Razarajuća migracija lokalne baze je uklonjena i napisana je prava migracija sa testom
-- [ ] Tamna tema je proverena na svakom ekranu, uključujući grafikone
-- [ ] Rotacija ekrana je proverena na svakom ekranu i ne gubi stanje (NFR-04)
-- [ ] Aplikacija je testirana sa pet stotina predmeta i lista ostaje glatka (NFR-01)
-- [ ] Detaljno logovanje mreže je isključeno u release build-u
-- [ ] Provereno da nijedan upit na serveru ne radi bez uslova o vlasniku
-- [ ] Svih petnaest stavki acceptance checkliste iz prd.md sekcija 14 je označeno i ima dokaz
-- [ ] README opisuje kako se ceo sistem pokreće od nule, uključujući demo kredencijale
+- [x] Svaki ekran ima sva četiri stanja iz BR-017: učitavanje, sadržaj, prazno i greška — potpuno tačno za Dashboard, Inventar, Lokacije (dodato Error), Statistika (dodato odbrambeno Error), AdminUsers, AdminCategories. Obrazložени izuzeci: Login/Register nemaju zaseban "prazno" (forma nema pojam praznog sadržaja) niti drugo dugme za ponovni pokušaj (ponovno slanje forme je taj "retry"); ItemDetails nema "prazno" (jedan predmet, ne lista) i Error koristi dugme „Nazad" umesto „Pokušaj ponovo" jer je jedini uzrok NOT_FOUND, koji nije moguće ispraviti ponovnim pozivom; AdminDashboard nema „prazno" jer statistika uvek ima šta da prikaže (i sa nulama). Provereno uživo na emulatoru u tiketu 27.
+- [x] Svako prazno stanje ima ikonicu, objašnjenje i poziv na akciju — dodata zajednička ikonica (`ic_state_empty`) na svih 6 ekrana sa praznim stanjem; AdminUsers nema akcioni CTA jer administrator ne može da "doda korisnika" (korisnici se sami registruju) — ima ikonicu i objašnjenje.
+- [x] Svako stanje greške ima razumljivu poruku i dugme za ponovni pokušaj — dodata zajednička ikonica (`ic_state_error`) na svih 8 ekrana sa stanjem greške; retry dodat i na Locations i Statistics (odbrambeno, Room čitanje normalno ne baca).
+- [x] Nijedna poruka korisniku ne sadrži tekst izuzetka ni stack trace (ERR-03) — potvrđeno pregledom: `SafeApiCall` je jedino mesto sa `catch (e: Exception)`, `e.message` se samo loguje (Logcat), nikad ne stiže do UI-ja.
+- [x] Sve poruke o greškama su prevedene po katalogu iz prd.md sekcija 10 — svih 19 poruka iz kataloga postoji u `strings.xml`. Popravljeno u ovom tiketu: `error_category_in_use`/`error_location_in_use` sada nose stvaran broj predmeta (`%1$d`) iz `details.itemCount` sa servera (ranije generičan tekst bez broja); VALIDATION_ERROR sada prikazuje stvarne poruke po polju iz `details` (server ih već šalje lokalizovane), ne samo generičan "Neispravni podaci". Pokriveno testovima u `SafeApiCallTest`.
+- [x] Indikator učitavanja postoji na svim operacijama iz prd.md sekcija 11, uz onemogućeno dugme — dodato i za promenu valute u Profilu (jedina operacija kojoj je nedostajalo), dropdown se onemogućava dok zahtev traje.
+- [x] Nijedan tekst vidljiv korisniku nije hardkodovan; sve je u resursima (NFR-09) — potvrđeno iscrpnom pretragom `presentation/`/`ui/`, nema pogodaka osim komentara i internih ključeva.
+- [x] Razarajuća migracija lokalne baze je uklonjena i napisana je prava migracija sa testom — `fallbackToDestructiveMigration()` se nikad nije koristio u projektu, ali baza dotad nije imala ni jednu pravu `Migration`, pa bi svaka buduća promena šeme srušila aplikaciju. Dodato: `MIGRATION_1_2` (indeks `(userId, createdAt)` koji pokriva upit liste inventara, NFR-01), `MigrationTest` sa `MigrationTestHelper` koji upisuje predmet u v1 bazu i proverava da migracija čuva podatak i dodaje indeks — pokrenut na emulatoru (Pixel6_API36), prošao. Uživo potvrđeno i van testa: postojeća instalacija sa v1 bazom (63 predmeta) je posle nadogradnje na v2 zadržala sve podatke.
+- [x] Tamna tema je proverena na svakom ekranu, uključujući grafikone — provereno uživo na emulatoru (`cmd uimode night yes`) na svih 13 fragmenata: Login, Register, Dashboard, Inventar, ItemDetails, AddEditItem, Lokacije, Statistika (pie/bar chart, legenda, ose — sve čitljivo), Profil, AdminDashboard, AdminUsers, AdminCategories, i prazno stanje pretrage. FilterBottomSheet nije posebno snimljen ali koristi iste standardne Material 3 komponente kao ostatak ekrana (bez ijedne hardkodovane boje), pa deli istu garanciju teme.
+- [x] Rotacija ekrana je proverena na svakom ekranu i ne gubi stanje (NFR-04) — pregledom koda potvrđeno da InventoryViewModel (pretraga/filteri) i svi ostali ekrani već drže stanje u ViewModel-u/SavedStateHandle. Pronađen i ispravljen stvaran bug: `AddEditItemFragment` je držao izbor kategorije/lokacije/datuma/fotografije i "dirty" snapshot kao obična polja Fragmenta, koja rotacija briše, i ponovo pozivao `populateForm()` sa originalnim (nepromenjenim) podacima pri svakom `onViewCreated`, brišući nesačuvan unos. Popravljeno premeštanjem tog stanja u `AddEditItemViewModel` i pozivanjem `populateForm()` tačno jednom po životnom veku ViewModel-a. Uživo provereno na emulatoru: upisan naziv i izabrana kategorija, rotacija na landscape, oba podatka ostala, a dijalog "Odbaciti izmene?" se ispravno pojavio pri izlasku.
+- [x] Aplikacija je testirana sa pet stotina predmeta i lista ostaje glatka (NFR-01) — kroz API dodato 450 predmeta demo nalogu (ukupno 513), sinhronizovano na uređaj, `dumpsys gfxinfo` tokom brzog skrolovanja liste pokazuje 1.01% janky frames (2/199), 50/90/95-ti percentil 17–18ms — praktično ravnomernih 60fps. Test podaci uklonjeni posle provere, demo nalog vraćen na zvaničnu seed vrednost.
+- [x] Detaljno logovanje mreže je isključeno u release build-u — `NetworkModule.kt` već uslovljava `HttpLoggingInterceptor` sa `BuildConfig.DEBUG` (`BODY` u debug-u, `NONE` u release-u); ništa nije trebalo menjati, samo je potvrđeno pregledom koda.
+- [x] Provereno da nijedan upit na serveru ne radi bez uslova o vlasniku — pregledan svaki modul u `backend/src/modules/`: `items`/`locations` svuda filtriraju `WHERE ... AND user_id = ?` iz JWT-a (nikad iz tela zahteva), `categories` je namerno globalna tabela (bez `user_id`) i izmene su zaštićene `requireAdmin`, admin rute vraćaju samo agregate. Nijedan propust nije pronađen.
+- [x] Svih petnaest stavki acceptance checkliste iz prd.md sekcija 14 je označeno i ima dokaz — sve štiklirane u prd.md, sa referencom na dokaz (4 aktivnosti i 13 fragmenata prebrojani direktno u kodu, ostalo provereno kroz prethodne tikete i ovaj tiket).
+- [x] README opisuje kako se ceo sistem pokreće od nule, uključujući demo kredencijale — već postojalo i tačno (backend setup, Android napomena o emulatoru, demo nalog `demo@homeinventory.rs` / `Demo1234`, Postman kolekcija); provereno, nije trebalo menjati.

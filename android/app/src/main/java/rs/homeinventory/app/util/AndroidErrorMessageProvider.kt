@@ -11,7 +11,8 @@ class AndroidErrorMessageProvider @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ErrorMessageProvider {
 
-    override fun message(code: ErrorCode): String = context.getString(resFor(code))
+    override fun message(code: ErrorCode, vararg formatArgs: Any): String =
+        context.getString(resFor(code), *formatArgs)
 
     @StringRes
     private fun resFor(code: ErrorCode): Int = when (code) {

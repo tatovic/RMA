@@ -80,11 +80,20 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 launch { viewModel.loggedOut.collect { if (it) goToAuthentication() } }
                 launch { viewModel.currencyUpdateError.collect(::showCurrencyUpdateError) }
                 launch { viewModel.warrantyThresholdDays.collect(::renderWarrantyThreshold) }
+                launch { viewModel.isSavingCurrency.collect(::renderSavingCurrency) }
             }
         }
     }
 
+    // BR-017 Loading/Success — kratak trenutak dok currentUser Flow prvi put ne emituje (tiket 27).
     private fun renderUser(user: User?) {
+        binding.progressLoading.isVisible = user == null
+        val contentViews = listOf(
+            binding.textName, binding.textEmail, binding.textRole,
+            binding.layoutCurrency, binding.layoutWarrantyThreshold,
+            binding.buttonLocations, binding.buttonLogout
+        )
+        contentViews.forEach { it.isVisible = user != null }
         user ?: return
         binding.textName.text = user.name
         binding.textEmail.text = user.email
@@ -105,6 +114,12 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     private fun showCurrencyUpdateError(message: String?) {
         message ?: return
         Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
+    }
+
+    // prd.md sekcija 11 — dropdown se onemogucava dok promena valute putuje na server (sprecava dvostruko slanje).
+    private fun renderSavingCurrency(isSaving: Boolean) {
+        binding.layoutCurrency.isEnabled = !isSaving
+        binding.editCurrency.isEnabled = !isSaving
     }
 
     // BR-005 — posle odjave povratno dugme ne vraca u aplikaciju.

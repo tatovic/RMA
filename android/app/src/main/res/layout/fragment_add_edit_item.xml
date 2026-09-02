@@ -43,6 +43,44 @@
             app:constraint_referenced_ids="containerPhoto,layoutName,layoutCategory,layoutLocation,textMoreToggle,buttonSave"
             tools:visibility="visible" />
 
+        <!-- BR-017 Error — pojavljuje se samo ako pocetno ucitavanje predmeta (edit rezim) ne uspe (tiket 27). -->
+        <LinearLayout
+            android:id="@+id/groupError"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:layout_marginTop="@dimen/auth_section_spacing"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textTitle"
+            tools:visibility="visible">
+
+            <ImageView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginBottom="@dimen/auth_field_spacing"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_state_error" />
+
+            <TextView
+                android:id="@+id/textErrorMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textAppearance="?attr/textAppearanceBodyLarge"
+                tools:text="@string/error_unknown" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonErrorRetry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/auth_section_spacing"
+                android:text="@string/dashboard_error_retry_action" />
+
+        </LinearLayout>
+
         <!-- FR-081/FR-082/FR-083 — fotografija predmeta je opciona; dodirom se bira izmedju kamere i galerije. -->
         <FrameLayout
             android:id="@+id/containerPhoto"
