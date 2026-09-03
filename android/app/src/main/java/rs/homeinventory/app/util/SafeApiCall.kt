@@ -9,6 +9,7 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 private const val TAG = "SafeApiCall"
+private const val HTTP_NO_CONTENT = 204
 private val errorBodyGson = Gson()
 
 /**
@@ -22,8 +23,17 @@ suspend fun <T> safeApiCall(
     val response = call()
     when {
         response.isSuccessful && response.body() != null -> Resource.Success(response.body()!!)
-        // Uspesan odgovor bez tela (npr. 204 pri brisanju ili promeni lozinke).
-        response.isSuccessful -> unitSuccess()
+        // 204 No Content — jedini uspesan odgovor koji po ugovoru NEMA telo (DELETE predmeta/lokacije/
+        // kategorije, promena lozinke). Tu je `Unit as T` tacan, jer BackendApi bas te pozive
+        // deklarise kao Response<Unit>.
+        response.code() == HTTP_NO_CONTENT -> unitSuccess()
+        // Svaki drugi 2xx bez tela je greska, ne uspeh: poziv je ocekivao DTO i dobio prazno. Ranije
+        // je i on prolazio kroz `Unit as T`, pa bi pozivalac dobio Resource.Success ciji `data` nije
+        // tip koji je trazio i srusio bi se tek pri prvom pristupu polju (tiket 28, nalaz C5).
+        response.isSuccessful -> {
+            Log.e(TAG, "Uspesan odgovor ${response.code()} bez tela tamo gde se telo ocekuje") // ERR-04
+            Resource.Error(ErrorCode.UNKNOWN, errorMessageProvider.message(ErrorCode.UNKNOWN))
+        }
         else -> parseErrorBody(response, errorMessageProvider)
     }
 } catch (e: UnknownHostException) {

@@ -26,7 +26,10 @@ class AuthInterceptor(
         // (TOKEN_EXPIRED/TOKEN_INVALID). Provera tokena razdvaja ovo od login/register, gde 401 znaci
         // pogresne kredencijale (INVALID_CREDENTIALS), ne isteklu sesiju.
         if (response.code == 401 && !token.isNullOrBlank()) {
-            runBlocking { sessionManager.onUnauthorized() }
+            // Bez runBlocking-a: onUnauthorized() samo zakazuje posao na aplikacionom opsegu i vraca
+            // se odmah. Ranije je ovde, na OkHttp niti i sa jos otvorenim telom odgovora, cekalo
+            // brisanje kompletne Room baze (tiket 28, nalaz 10).
+            sessionManager.onUnauthorized()
         }
         return response
     }

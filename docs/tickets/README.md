@@ -63,6 +63,12 @@ Izvor: `prd.md`, `db.md`, `tech.md` u korenu projekta. Tiketi ne ponavljaju te d
 | 26 | [Puna sinhronizacija i offline rad](26-sinhronizacija.md) |
 | 27 | [Poliranje i provera projektnih zahteva](27-poliranje-i-acceptance.md) |
 
+## Faza 8 — Popravke
+
+| # | Tiket |
+|---|---|
+| 28 | [Popravke posle revizije koda](28-popravke-posle-revizije.md) |
+
 ## Ključne tačke
 
 - **Tiket 13** zatvara prvi kompletan vertikalni presek: podatak putuje od MySQL baze do ekrana telefona.

@@ -35,6 +35,13 @@ const authenticate = asyncHandler(async (req, res, next) => {
     throw new AppError('ACCOUNT_DEACTIVATED');
   }
 
+  // Promena lozinke uvećava users.token_version, čime svaki ranije izdat token ostaje sa starim
+  // `tv` claim-om i ovde pada kao nevažeći (tiket 28, nalaz 12). Token izdat pre uvođenja kolone
+  // nema claim — takav se tretira kao verzija 0, što se poklapa sa DEFAULT 0 u šemi.
+  if ((payload.tv ?? 0) !== user.token_version) {
+    throw new AppError('TOKEN_INVALID');
+  }
+
   // OWN-01 — narednim slojevima ide identifikator iz verifikovanog tokena, ne iz tela zahteva.
   req.userId = user.id;
   req.user = user;

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pravila za Android 12+ (android:dataExtractionRules). Isti sadrzaj kao backup_rules.xml, ali za dva
+  odvojena toka: cloud-backup (Google Drive) i device-transfer (prenos na nov uredjaj).
+  Obrazlozenje sta se izostavlja i zasto je u backup_rules.xml (tiket 28, nalaz 13).
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="datastore/user_prefs.preferences_pb" />
+        <exclude domain="database" path="home_inventory.db" />
+        <exclude domain="database" path="home_inventory.db-shm" />
+        <exclude domain="database" path="home_inventory.db-wal" />
+        <exclude domain="external" path="captured_photos" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="datastore/user_prefs.preferences_pb" />
+        <exclude domain="database" path="home_inventory.db" />
+        <exclude domain="database" path="home_inventory.db-shm" />
+        <exclude domain="database" path="home_inventory.db-wal" />
+        <exclude domain="external" path="captured_photos" />
+    </device-transfer>
+</data-extraction-rules>

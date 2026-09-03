@@ -40,10 +40,13 @@ const changePassword = async (userId, { currentPassword, newPassword }) => {
   }
 
   const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_ROUNDS);
-  await pool.query('UPDATE users SET password_hash = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ?', [
-    passwordHash,
-    userId,
-  ]);
+  // token_version + 1 poništava svaki token izdat pre ove promene (tiket 28, nalaz 12) — bez toga
+  // je token ukraden pre promene lozinke ostajao važeći do isteka, punih sedam dana.
+  await pool.query(
+    `UPDATE users SET password_hash = ?, token_version = token_version + 1, updated_at = UTC_TIMESTAMP(3)
+     WHERE id = ?`,
+    [passwordHash, userId]
+  );
 };
 
 module.exports = { getById, updateProfile, changePassword };

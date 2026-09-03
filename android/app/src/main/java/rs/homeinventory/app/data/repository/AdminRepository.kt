@@ -3,6 +3,7 @@ package rs.homeinventory.app.data.repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import rs.homeinventory.app.data.local.dao.CategoryDao
+import rs.homeinventory.app.data.local.dao.ItemDao
 import rs.homeinventory.app.data.remote.api.BackendApi
 import rs.homeinventory.app.data.remote.dto.AdminStatsDto
 import rs.homeinventory.app.data.remote.dto.AdminUserDto
@@ -23,6 +24,7 @@ import javax.inject.Singleton
 class AdminRepository @Inject constructor(
     private val api: BackendApi,
     private val categoryDao: CategoryDao,
+    private val itemDao: ItemDao,
     private val errorMessageProvider: ErrorMessageProvider
 ) {
     suspend fun getStats(): Resource<AdminStatsDto> = withContext(Dispatchers.IO) {
@@ -69,6 +71,12 @@ class AdminRepository @Inject constructor(
     suspend fun deleteCategory(id: String): Resource<Unit> = withContext(Dispatchers.IO) {
         when (val result = safeApiCall(errorMessageProvider) { api.deleteCategory(id) }) {
             is Resource.Success -> {
+                // Isti razlog kao kod brisanja lokacije u ItemRepository: soft-obrisani predmeti su i
+                // dalje redovi u Room-u i strani kljuc ih drzi, pa bi brisanje kategorije palo na
+                // SQLiteConstraintException. Server je svoje tombstone redove vec poneo kaskadom
+                // (migracija 001); zivih predmeta nema jer ih server ne bi ni dozvolio (tiket 28,
+                // blokirajuci nalaz 04).
+                itemDao.hardDeleteByCategory(id)
                 categoryDao.delete(id)
                 Resource.Success(Unit)
             }

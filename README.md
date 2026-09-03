@@ -61,6 +61,32 @@ npm run dev
 
 Android projekat se otvara u Android Studiju iz foldera `android/`. Emulator dolazi do backenda preko `10.0.2.2:3000`.
 
+### Ako baza već postoji
+
+`npm run db:create` je idempotentan, ali `schema.sql` je pisan sa `CREATE TABLE IF NOT EXISTS` i zato **ne dira tabele koje već postoje**. Izmene postojeće šeme (nova kolona, promenjen strani ključ) stižu isključivo kroz migracije:
+
+```bash
+cd backend
+npm run db:migrate
+```
+
+Pokreće se posle svakog `git pull`-a koji donosi izmenu šeme. Sigurno je pozvati ga i kad nema šta da se primeni — svaki fajl se izvršava tačno jednom, evidencija je u tabeli `schema_migrations`. Pravila su u [db.md, sekcija 11](db.md#11-migracije).
+
+### Testovi
+
+```bash
+cd backend
+npm test
+```
+
+Suite (`node:test` + `supertest`) pokriva regresije sinhronizacije, pravila vlasništva OWN-01…07 i granicu autentifikacije. Podiže **zasebnu** bazu (`home_inventory_test`), pokrene testove i obriše je — razvojna baza se ne dira. Traži samo MySQL koji već radi i ispravan `.env`.
+
+Android testovi:
+
+```bash
+cd android && ./gradlew testDebugUnitTest
+```
+
 ## Demo nalog
 
 `npm run seed` puni bazu demo inventarom od šezdesetak predmeta, raspoređenih po svim kategorijama i lokacijama.

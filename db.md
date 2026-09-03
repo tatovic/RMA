@@ -166,6 +166,7 @@ CREATE TABLE users (
   role          ENUM('USER','ADMIN') NOT NULL DEFAULT 'USER',
   is_active     TINYINT(1)    NOT NULL DEFAULT 1,
   currency      CHAR(3)       NOT NULL DEFAULT 'RSD',  -- valuta prikaza
+  token_version INT           NOT NULL DEFAULT 0,       -- poništava stare JWT-ove (tiket 28)
   created_at    DATETIME(3)   NOT NULL,
   updated_at    DATETIME(3)   NOT NULL,
   PRIMARY KEY (id),
@@ -237,9 +238,9 @@ CREATE TABLE inventory_items (
   CONSTRAINT fk_items_user
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_items_category
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
   CONSTRAINT fk_items_location
-    FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE RESTRICT,
+    FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE,
   CONSTRAINT chk_items_quantity CHECK (quantity >= 1 AND quantity <= 9999),
   CONSTRAINT chk_items_prices   CHECK (
         (purchase_price  IS NULL OR purchase_price  >= 0)
@@ -266,10 +267,20 @@ CREATE TABLE inventory_items (
 |---|---|---|
 | `items.user_id → users.id` | `CASCADE` | Brisanje naloga uklanja njegov inventar |
 | `locations.user_id → users.id` | `CASCADE` | Isto |
-| `items.category_id → categories.id` | `RESTRICT` | Baza je poslednja odbrana za BR-014 |
-| `items.location_id → locations.id` | `RESTRICT` | Isto |
+| `items.category_id → categories.id` | `CASCADE` | Vidi napomenu ispod (promenjeno u tiketu 28) |
+| `items.location_id → locations.id` | `CASCADE` | Isto |
 
-**Napomena:** `RESTRICT` blokira i brisanje kategorije koju koristi samo *soft-obrisan* predmet. To je namerno — soft-obrisan red i dalje postoji i mora imati važeću referencu.
+**Napomena (tiket 28, migracija `001-fk-cascade.sql`).** Ova dva ključa su do tiketa 28 bila `RESTRICT`, uz obrazloženje da je „baza poslednja odbrana za BR-014" i da soft-obrisan red mora imati važeću referencu. U praksi je to značilo da **tombstone red trajno zaključava svog roditelja**: pošto BR-014 guard broji samo žive predmete (`deleted_at IS NULL`), on bi brisanje propustio, a MySQL bi ga zatim odbio sa `ER_ROW_IS_REFERENCED_2`. Niko to nije hvatao, pa je sasvim običan tok — *dodaj predmet u sobu, obriši predmet, obriši sobu* — vraćao `500`, i to **zauvek**: soft-obrisan red se nikad ne uklanja sam.
+
+`CASCADE` izgleda opasnije nego što jeste, jer guard ostaje ispred njega:
+- dok postoji **ijedan živ predmet**, brisanje se odbija sa `LOCATION_IN_USE` / `CATEGORY_IN_USE` i kaskada se **nikada ne izvršava**;
+- kada guard propusti, kaskada po definiciji može da dohvati **samo tombstone redove**.
+
+Guard i `DELETE` od tiketa 28 idu u jednoj transakciji sa `FOR UPDATE`, pa paralelan `POST /api/items` ne može da se ubaci između provere i brisanja. `try/catch` na `ER_ROW_IS_REFERENCED_2` ostaje kao odbrana u dubinu i mapira se na `409`, nikad na `500`.
+
+Kod kategorija kaskada prelazi granicu korisnika (kategorije su globalne, BR-003). To je prihvatljivo **isključivo zato što je i BR-014 guard globalan** — broji predmete svih korisnika, pa ne postoji stanje u kojem bi kaskada dohvatila tuđ živ predmet.
+
+Na Room strani, strani ključevi ostaju `NO_ACTION`: klijent pre brisanja roditelja sam ukloni svoje tombstone redove (`ItemDao.hardDeleteByLocation` / `hardDeleteByCategory`), čime je izbegnuta izmena Room šeme.
 
 ### Ograničenje koje strani ključ ne može da sprovede
 
@@ -744,9 +755,17 @@ SYNCED --brisanje--> PENDING_DELETE --sync ok--> hardDelete lokalno
 
 **DB-RULE-03 — Predmet kreiran offline pa obrisan offline se briše fizički, bez poziva servera.** Server za njega nikada nije ni saznao.
 
-**DB-RULE-04 — Rešavanje konflikta (FR-095).** Pri push-u klijent šalje svoj `updatedAt`. Server poredi:
+**DB-RULE-04 — Rešavanje konflikta (FR-095).** Pri push-u klijent šalje `updatedAt`. Server poredi:
 - `clientUpdatedAt >= serverUpdatedAt` → prihvata izmenu, upisuje `updated_at = NOW(3)`, vraća `200` sa novim redom
 - `clientUpdatedAt < serverUpdatedAt` → odbija sa `409 SYNC_CONFLICT` i vraća serversku verziju; klijent njome prepisuje lokalni red (uz očuvanje `imagePath`, DB-RULE-02)
+
+**Šta je `updatedAt` koji klijent šalje.** To je **verzija koju je server poslednju izdao za taj red** — vraćena je u odgovoru na prethodni `POST`/`PUT`/pull i od tada se prenosi nepromenjena. Neproziran token, ne vreme lokalne izmene. Klijent ga **nikada ne generiše sam** i nikada ne upisuje `System.currentTimeMillis()` preko njega (ispravljeno u tiketu 28; do tada je svaka lokalna izmena i `softDelete` pisala sat sa telefona).
+
+Razlog je što se poređenje iznad izvršava nad dva broja koji moraju poticati iz istog izvora. Telefon sa satom koji zaostaje deset minuta je proizvodio `updatedAt` stariji od serverskog, pa je server njegovu sasvim regularnu izmenu proglašavao konfliktom; klijent bi zatim „rešio" taj konflikt tako što bi serverskom verzijom prepisao lokalni red — **korisnikov unos bi nestao bez ijedne poruke**. Sat koji žuri je isti problem u drugom smeru: takav klijent dobija svaki konflikt i tiho gazi izmene sa ostalih uređaja.
+
+Server dodatno odbija `updatedAt` koji je više od 24 sata ispred `UTC_TIMESTAMP` sa `400 VALIDATION_ERROR` — grubo pokvaren sat tako pada glasno, umesto da neprimetno pobeđuje u svakom konfliktu.
+
+Pri `POST`-u `updatedAt` uopšte ne učestvuje: nema ga u `createItemSchema`, zod ga odbacuje, a `created_at`/`updated_at` postavlja server.
 
 ---
 
@@ -754,15 +773,28 @@ SYNCED --brisanje--> PENDING_DELETE --sync ok--> hardDelete lokalno
 
 ### MySQL
 
-Nema formalnog migracionog alata. Šema se održava kroz `backend/src/db/schema.sql`, koji je pisan idempotentno (`CREATE TABLE IF NOT EXISTS`). Skripte:
+Šema se održava kroz `backend/src/db/schema.sql`, koji je pisan idempotentno (`CREATE TABLE IF NOT EXISTS`) i sadrži **samo tabele** — kreiranje same baze (sa imenom iz `env.DB_NAME`) radi `createDatabase.js`. Skripte:
 
 | Komanda | Efekat |
 |---|---|
 | `npm run db:create` | Kreira bazu i tabele iz `schema.sql` |
+| `npm run db:migrate` | Primenjuje migracije koje još nisu primenjene |
 | `npm run db:reset` | `DROP DATABASE` pa ponovo kreira — **samo u razvoju** |
 | `npm run seed` | Puni kategorije i demo nalog |
+| `npm test` | Podiže zasebnu test bazu, pokreće suite, pa je briše |
 
-Svaka izmena šeme posle Faze 2 se dodaje kao numerisani fajl `backend/src/db/migrations/00X_opis.sql` i istovremeno se ažurira `schema.sql`.
+**Migracioni alat (tiket 28).** `schema.sql` je idempotentan, što znači i da je **slep za izmene postojećih objekata**: `CREATE TABLE IF NOT EXISTS` neće ni pogledati tabelu koja već postoji, pa nova kolona ili promenjen strani ključ nikada ne stignu ni do jedne već kreirane baze. Zato postoji `backend/src/db/migrations/`.
+
+| Pravilo | Detalj |
+|---|---|
+| Naziv fajla | `NNN-kratak-opis.sql`, rastuće (`001-fk-cascade.sql`, `002-users-token-version.sql`) |
+| Evidencija | Tabela `schema_migrations` (`name`, `applied_at`); fajl se primenjuje **tačno jednom** |
+| Redosled | Po nazivu, rastuće |
+| Već commit-ovan fajl | **Ne menja se.** Ispravka je nov fajl — inače baze koje su ga primenile ostaju u drugom stanju od onih koje nisu |
+| Sveža baza | `db:create` migracije samo **evidentira** kao primenjene, ne izvršava ih — `schema.sql` ih već sadrži |
+| Uz svaku migraciju | `schema.sql` se ažurira **u istom commitu**, da nova baza i migrirana baza budu identične |
+
+Runner je `backend/src/db/migrate.js`. `ALTER TABLE` je u MySQL-u DDL i implicitno commit-uje, pa transakcija oko jednog fajla ne bi ništa štitila; evidencija se upisuje odmah posle uspešnog izvršenja.
 
 ### Room
 

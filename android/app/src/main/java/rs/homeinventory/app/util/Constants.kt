@@ -29,3 +29,8 @@ val WARRANTY_THRESHOLD_OPTIONS = listOf(7, 30, 60, 90)
 
 // FR-098 — kljuc u sync_metadata pod kojim SyncManager cuva serversko vreme poslednjeg delta pull-a (tiket 26).
 const val SYNC_METADATA_ITEMS_LAST_SYNC_KEY = "items_last_sync_at"
+
+// Gornja granica broja strana koje jedan delta pull sme da povuce (tiket 28, nalaz 01). Sa 500
+// predmeta po strani je 50 strana ~25.000 predmeta — daleko iznad svake realne velicine inventara
+// (db.md sekcija 12), pa granica postoji iskljucivo da greska na serveru ne bi vrtela petlju zauvek.
+const val SYNC_MAX_PULL_PAGES = 50

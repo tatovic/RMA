@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import rs.homeinventory.app.R
 import rs.homeinventory.app.data.repository.AuthRepository
 import rs.homeinventory.app.databinding.ActivityMainBinding
+import rs.homeinventory.app.util.applySystemBarsPadding
 import javax.inject.Inject
 
 // ACT-2 — ljuska glavnog dela aplikacije: bottom navigacija sa nav_main.xml (tech.md sekcija 10).
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
             if (authRepository.hasValidSession()) {
                 binding = ActivityMainBinding.inflate(layoutInflater)
                 setContentView(binding.root)
+                binding.root.applySystemBarsPadding() // NFR-10, tiket 28
                 setupNavigation()
             } else {
                 startActivity(Intent(this@MainActivity, AuthenticationActivity::class.java))

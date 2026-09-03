@@ -23,5 +23,11 @@ object JwtUtils {
         return if (remainder == 0) value else value + "=".repeat(4 - remainder)
     }
 
-    private data class JwtPayloadDto(@SerializedName("exp") val exp: Long?)
+    // `@field:` je ovde obavezan, ne stilski izbor (tiket 28, nalaz C9). Bez prefiksa Kotlin
+    // anotaciju stavlja SAMO na parametar konstruktora, pa je Gson na polju nikad ne vidi i tiho pada
+    // na poklapanje po IMENU polja. To radi dok imena postoje — a u release build-u sa R8 ne postoje:
+    // `exp` postane `a`, Gson vrati null, `hasValidSession()` uvek kaze false i prijava upada u
+    // petlju (server vrati 200, aplikacija se odmah vrati na ekran Prijave). Sa `@field:` anotacija
+    // stize do polja, pa je hvata i pravilo u proguard-rules.pro koje cuva sva @SerializedName polja.
+    private data class JwtPayloadDto(@field:SerializedName("exp") val exp: Long?)
 }

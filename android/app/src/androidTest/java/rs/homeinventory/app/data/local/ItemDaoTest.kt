@@ -253,4 +253,124 @@ class ItemDaoTest {
         assertTrue(db.categoryDao().getAll().isEmpty())
         assertTrue(db.locationDao().observeAll(userId).first().isEmpty())
     }
+
+    // ---- Tiket 28 ----
+
+    // DB-RULE-04 (blokirajuci nalaz 03) — `updatedAt` je verzija koju je izdao SERVER i lokalno
+    // brisanje je ne sme prepisati satom sa telefona. Ranije je softDelete upisivao `now` i u
+    // updatedAt, pa je uredjaj sa zaostalim satom slao verziju stariju od serverske.
+    @Test
+    fun softDelete_doesNotOverwriteServerIssuedUpdatedAt() = runTest {
+        itemDao.upsert(item(id = "1", name = "Predmet").copy(updatedAt = 12_345L))
+
+        itemDao.softDelete("1", now = 999_999L)
+
+        val stored = itemDao.getById("1")!!
+        assertEquals(12_345L, stored.updatedAt)
+        assertEquals(999_999L, stored.deletedAt)
+    }
+
+    @Test
+    fun undoDelete_doesNotOverwriteServerIssuedUpdatedAt() = runTest {
+        itemDao.upsert(item(id = "1", name = "Predmet").copy(updatedAt = 12_345L))
+        itemDao.softDelete("1", now = 999_999L)
+
+        itemDao.undoDelete("1")
+
+        assertEquals(12_345L, itemDao.getById("1")!!.updatedAt)
+    }
+
+    // Blokirajuci nalaz 04 — soft-obrisan predmet je i dalje red koji strani kljuc drzi, pa bi
+    // brisanje lokacije palo na SQLiteConstraintException. Tombstone redovi se zato uklanjaju rucno
+    // neposredno pre roditelja (ItemRepository.deleteLocation).
+    @Test
+    fun hardDeleteByLocation_removesTombstonesSoParentCanBeDeleted() = runTest {
+        itemDao.upsert(item(id = "1", name = "Obrisan", locationId = kitchen.id, deletedAt = 500L))
+        itemDao.upsert(item(id = "2", name = "Drugde", locationId = livingRoom.id))
+
+        itemDao.hardDeleteByLocation(kitchen.id)
+        db.locationDao().hardDelete(kitchen.id)
+
+        assertEquals(null, itemDao.getById("1"))
+        assertEquals("2", itemDao.getById("2")!!.id)
+    }
+
+    @Test
+    fun hardDeleteByCategory_removesTombstonesSoParentCanBeDeleted() = runTest {
+        itemDao.upsert(item(id = "1", name = "Obrisan", categoryId = furniture.id, deletedAt = 500L))
+        itemDao.upsert(item(id = "2", name = "Drugde", categoryId = electronics.id))
+
+        itemDao.hardDeleteByCategory(furniture.id)
+        db.categoryDao().delete(furniture.id)
+
+        assertEquals(null, itemDao.getById("1"))
+        assertEquals("2", itemDao.getById("2")!!.id)
+    }
+
+    // BR-005 (nalaz 10) — istekla sesija cuva neposlat rad prijavljenog korisnika, za razliku od
+    // odjave koja brise sve. Tudji redovi i sinhronizovan kes odlaze.
+    @Test
+    fun clearPreservingUnsyncedWork_keepsOnlyOwnPendingRows() = runTest {
+        itemDao.upsert(item(id = "synced", name = "Sa servera"))
+        itemDao.upsert(item(id = "pending", name = "Neposlat").copy(syncStatus = SyncStatus.PENDING_CREATE))
+        itemDao.upsert(
+            item(id = "tudji", name = "Tudji neposlat", userId = otherUserId)
+                .copy(syncStatus = SyncStatus.PENDING_UPDATE)
+        )
+
+        db.clearPreservingUnsyncedWork(userId)
+
+        assertEquals(null, itemDao.getById("synced"))
+        assertEquals(null, itemDao.getById("tudji"))
+        assertEquals("Neposlat", itemDao.getById("pending")!!.name)
+    }
+
+    // Kategorija/lokacija koju preostali red jos drzi mora prezivati ciscenje — inace bi brisanje
+    // roditelja palo na strani kljuc, a predmet ostao bez naziva kategorije i lokacije.
+    @Test
+    fun clearPreservingUnsyncedWork_keepsParentsOfPreservedRows() = runTest {
+        itemDao.upsert(
+            item(id = "pending", name = "Neposlat", categoryId = electronics.id, locationId = livingRoom.id)
+                .copy(syncStatus = SyncStatus.PENDING_CREATE)
+        )
+
+        db.clearPreservingUnsyncedWork(userId)
+
+        assertEquals(listOf(electronics.id), db.categoryDao().getAll().map { it.id })
+        assertEquals(listOf(livingRoom.id), db.locationDao().observeAll(userId).first().map { it.id })
+    }
+
+    @Test
+    fun clearPreservingUnsyncedWork_withoutUserClearsEverything() = runTest {
+        itemDao.upsert(item(id = "pending", name = "Neposlat").copy(syncStatus = SyncStatus.PENDING_CREATE))
+
+        db.clearPreservingUnsyncedWork(null)
+
+        assertEquals(null, itemDao.getById("pending"))
+        assertTrue(db.categoryDao().getAll().isEmpty())
+    }
+
+    // OWN-01/OWN-07 — push sme da posalje samo redove prijavljenog korisnika.
+    @Test
+    fun getPending_returnsOnlyRowsOfGivenUser() = runTest {
+        itemDao.upsert(item(id = "moj", name = "Moj").copy(syncStatus = SyncStatus.PENDING_CREATE))
+        itemDao.upsert(
+            item(id = "tudji", name = "Tudji", userId = otherUserId).copy(syncStatus = SyncStatus.PENDING_CREATE)
+        )
+        itemDao.upsert(item(id = "sinhronizovan", name = "Sinhronizovan"))
+
+        assertEquals(listOf("moj"), itemDao.getPending(userId).map { it.id })
+    }
+
+    // Nalaz C7 — `%` i `_` iz korisnickog unosa su LIKE dzokeri; upit koji ih sadrzi sme da nadje
+    // samo doslovno poklapanje. Upit stize normalizovan (SearchQueryNormalizer ih vec escapuje).
+    @Test
+    fun search_treatsWildcardCharactersLiterally() = runTest {
+        itemDao.upsert(item(id = "1", name = "Popust 50%"))
+        itemDao.upsert(item(id = "2", name = "Obican predmet"))
+
+        val hits = itemDao.search(userId, "50\\%").first().map { it.name }
+
+        assertEquals(listOf("Popust 50%"), hits)
+    }
 }

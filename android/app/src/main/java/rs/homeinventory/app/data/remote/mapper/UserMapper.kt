@@ -13,7 +13,9 @@ fun UserDto.toEntity(): UserEntity {
         id = id,
         name = name,
         email = email,
-        role = UserRole.valueOf(role),
+        // ERR-02 — nepoznata rola sa servera ne sme da rusi mapiranje; pada na najmanje privilegovanu
+        // (tiket 28, nalaz C10). `requireAdmin` na serveru je ionako prava odbrana, ovo je samo prikaz.
+        role = UserRole.entries.find { it.name == role } ?: UserRole.USER,
         isActive = isActive,
         currency = currency,
         createdAt = createdMillis,

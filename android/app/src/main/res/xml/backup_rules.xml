@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pravila za automatski backup na Android 11 i starijim (android:fullBackupContent).
+
+  SEC-10 / OWN-07 (tiket 28, nalaz 13) — `allowBackup` je ostao ukljucen jer korisniku ima smisla da
+  podesavanja prezive zamenu telefona, ali dve stvari ne smeju da napuste uredjaj u Google backup:
+    - user_prefs: DataStore sa bearer tokenom sesije;
+    - home_inventory.db: kompletan licni inventar, ukljucujuci kesiran nalog.
+  Oba se posle prijave ionako ponovo dobiju sa servera, pa se backup-om ne dobija nista, a rizik je
+  stvaran (token vazi do sedam dana).
+-->
+<full-backup-content>
+    <exclude domain="file" path="datastore/user_prefs.preferences_pb" />
+    <exclude domain="database" path="home_inventory.db" />
+    <exclude domain="database" path="home_inventory.db-shm" />
+    <exclude domain="database" path="home_inventory.db-wal" />
+    <!-- FR-081 — privremeni snimci kamere; nemaju sta da trate prostor u backup-u. -->
+    <exclude domain="external" path="captured_photos" />
+</full-backup-content>

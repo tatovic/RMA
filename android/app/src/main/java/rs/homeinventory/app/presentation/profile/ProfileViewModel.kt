@@ -64,8 +64,11 @@ class ProfileViewModel @Inject constructor(
     // valutu iz istog User.currency polja u Room-u (currentUser flow).
     fun updateCurrency(currency: String) {
         if (currency == user.value?.currency || _isSavingCurrency.value) return
+        // Zastita se postavlja SINHRONO, pre launch-a — `launch` samo zakazuje korutinu, pa dva
+        // brza dodira oba prodju kroz proveru iznad (tiket 28, nalaz 09).
+        _isSavingCurrency.value = true
+
         viewModelScope.launch {
-            _isSavingCurrency.value = true
             when (val result = authRepository.updateCurrency(currency)) {
                 is Resource.Error -> _currencyUpdateError.value = result.message
                 else -> Unit

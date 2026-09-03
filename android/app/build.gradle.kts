@@ -28,7 +28,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // Tiket 28 (nalaz C9) — release build je do sada isporucivao pun, neskracen i
+            // neobfuskovan kod. Pravila koja cuvaju Gson DTO-e, Room i Hilt su u proguard-rules.pro;
+            // najveci rizik su DTO-i, jer Gson trazi polja po imenu i posle preimenovanja tiho
+            // ostavlja null umesto da pukne. Zato je release build obavezno proveriti na uredjaju.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {

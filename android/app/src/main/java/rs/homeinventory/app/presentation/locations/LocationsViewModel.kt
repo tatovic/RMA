@@ -67,8 +67,11 @@ class LocationsViewModel @Inject constructor(
         _fieldErrors.value = errors
         if (parsed == null) return
 
+        // Zastita se postavlja SINHRONO, pre launch-a — `launch` samo zakazuje korutinu, pa dva
+        // brza dodira oba prodju kroz proveru iznad (tiket 28, nalaz 09).
+        _formState.value = Resource.Loading
+
         viewModelScope.launch {
-            _formState.value = Resource.Loading
             _formState.value = if (existingId == null) {
                 itemRepository.createLocation(parsed.name, parsed.description)
             } else {
@@ -80,8 +83,11 @@ class LocationsViewModel @Inject constructor(
     // BR-014 — poziva se tek posto je ekran vec proverio da lokacija nema predmeta.
     fun delete(id: String) {
         if (_deleteState.value is Resource.Loading) return
+        // Zastita se postavlja SINHRONO, pre launch-a — `launch` samo zakazuje korutinu, pa dva
+        // brza dodira oba prodju kroz proveru iznad (tiket 28, nalaz 09).
+        _deleteState.value = Resource.Loading
+
         viewModelScope.launch {
-            _deleteState.value = Resource.Loading
             _deleteState.value = itemRepository.deleteLocation(id)
         }
     }

@@ -102,7 +102,16 @@ const getItem = async (userId, id) => {
   return item;
 };
 
+// Koliko `updatedAt` sme da bude ispred serverskog vremena pre nego što ga odbijemo kao neispravan.
+const MAX_CLOCK_SKEW_MS = 24 * 60 * 60 * 1000;
+
 // DB-RULE-04 — starija klijentska verzija se odbija sa 409 i vraća se serverska verzija.
+//
+// `updatedAt` koji klijent šalje je verzija koju je server poslednju izdao za taj red — neproziran
+// token, ne vreme sa telefona (db.md DB-RULE-04, ispravljeno u tiketu 28). Poređenje ispod zato
+// ostaje isto; jedina dopuna je odbijanje vrednosti koja je toliko u budućnosti da je očigledno
+// nastala na pokvarenom satu. Bez toga bi takav klijent dobijao svaki konflikt, tiho pregazivši
+// izmene sa ostalih uređaja umesto da glasno padne.
 const updateItem = async (userId, id, input) => {
   const current = await findActiveOwnedById(userId, id);
   if (!current) {
@@ -114,6 +123,16 @@ const updateItem = async (userId, id, input) => {
 
   const clientUpdatedAt = new Date(input.updatedAt).getTime();
   const serverUpdatedAt = new Date(current.updated_at).getTime();
+
+  const [[{ now }]] = await pool.query('SELECT UTC_TIMESTAMP(3) AS now');
+  if (clientUpdatedAt - new Date(now).getTime() > MAX_CLOCK_SKEW_MS) {
+    throw new AppError('VALIDATION_ERROR', [
+      {
+        field: 'updatedAt',
+        message: 'updatedAt je previše u budućnosti — proverite podešavanje vremena na uređaju',
+      },
+    ]);
+  }
 
   if (clientUpdatedAt < serverUpdatedAt) {
     throw new AppError('SYNC_CONFLICT', serializeItem(current));
@@ -150,24 +169,58 @@ const deleteItem = async (userId, id) => {
   );
 };
 
+// Veličina jedne strane delte. Dohvata se PAGE_SIZE + 1 red da bi se `hasMore` znao bez drugog upita.
+const DELTA_PAGE_SIZE = 500;
+
 // FR-098 — bez `since` vraća samo aktivne predmete; sa `since` vraća delta (uključujući obrisane).
+//
+// Delta je straničena (tiket 28, blokirajući nalaz 01). Ranije je vraćala `LIMIT 500` bez ikakvog
+// signala da ima još — klijent bi upisao serverTime kao novi `since` i time trajno preskočio svaki
+// red preko petstotog. Odgovor sada nosi `nextSince` (dokle je klijent stvarno stigao) i `hasMore`.
 const listItems = async (userId, since) => {
   const [[{ serverTime }]] = await pool.query('SELECT UTC_TIMESTAMP(3) AS serverTime');
 
-  let rows;
-  if (since) {
-    [rows] = await pool.query(
-      'SELECT * FROM inventory_items WHERE user_id = ? AND updated_at > ? ORDER BY updated_at ASC LIMIT 500',
-      [userId, new Date(since)]
-    );
-  } else {
-    [rows] = await pool.query(
+  if (!since) {
+    // Prvi pull svežeg klijenta. Namerno bez straničenja: ova grana isključuje tombstone redove i
+    // vraća samo živ inventar jednog korisnika (procena iz db.md sekcija 12 — reda veličine stotina
+    // predmeta, ~300 KB), pa jedan odgovor nosi ceo skup i klijent nema šta da nastavi.
+    const [rows] = await pool.query(
       'SELECT * FROM inventory_items WHERE user_id = ? AND deleted_at IS NULL ORDER BY created_at DESC',
       [userId]
     );
+    return { items: rows, serverTime, nextSince: serverTime, hasMore: false };
   }
 
-  return { items: rows, serverTime };
+  // (updated_at, id) kao sortiranje daje stabilan redosled i kad više redova deli isti milisekundni
+  // updated_at — bez `id` u ORDER BY, MySQL sme da ih vrati različitim redosledom između strana.
+  const [rows] = await pool.query(
+    'SELECT * FROM inventory_items WHERE user_id = ? AND updated_at > ? ORDER BY updated_at ASC, id ASC LIMIT ?',
+    [userId, new Date(since), DELTA_PAGE_SIZE + 1]
+  );
+
+  if (rows.length <= DELTA_PAGE_SIZE) {
+    // Delta je iscrpljena — `since` sledećeg pull-a je serversko vreme ovog odgovora.
+    return { items: rows, serverTime, nextSince: serverTime, hasMore: false };
+  }
+
+  let page = rows.slice(0, DELTA_PAGE_SIZE);
+
+  // `since` je poređenje po vremenu (updated_at > ?), pa granica strane ne sme da preseče grupu
+  // redova sa istim updated_at: sledeći zahtev bi počeo OD te vrednosti i preskočio braću iz iste
+  // milisekunde koja su ostala iza reza. Rep sa poslednjim updated_at zato ide u sledeću stranu.
+  const lastUpdatedAt = page[page.length - 1].updated_at.getTime();
+  const trimmed = page.filter((row) => row.updated_at.getTime() !== lastUpdatedAt);
+
+  if (trimmed.length === 0) {
+    // Više od DELTA_PAGE_SIZE redova deli istu milisekundu — rez bi ispraznio stranu i sync bi stao
+    // u mestu. Tada se strana vraća cela: `nextSince` je ta ista milisekunda, pa sledeći zahtev
+    // preskače ovu grupu. Jedini put na kojem se red može propustiti, i jedini kod kojeg je
+    // alternativa (beskonačna petlja) gora.
+    return { items: page, serverTime, nextSince: page[page.length - 1].updated_at, hasMore: true };
+  }
+
+  page = trimmed;
+  return { items: page, serverTime, nextSince: page[page.length - 1].updated_at, hasMore: true };
 };
 
-module.exports = { createItem, getItem, updateItem, deleteItem, listItems };
+module.exports = { createItem, getItem, updateItem, deleteItem, listItems, DELTA_PAGE_SIZE };

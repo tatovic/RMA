@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 
 const env = require('../config/env');
-const { createDatabase } = require('./createDatabase');
+const { createDatabase, quoteIdentifier } = require('./createDatabase');
 
 // RAZVOJNA KOMANDA — briše bazu u celosti. Ne sme se pokrenuti u produkciji.
 async function resetDatabase() {
@@ -18,7 +18,7 @@ async function resetDatabase() {
 
   try {
     console.warn(`[RAZVOJ] Brišem bazu "${env.DB_NAME}" u celosti...`);
-    await connection.query(`DROP DATABASE IF EXISTS \`${env.DB_NAME}\``);
+    await connection.query(`DROP DATABASE IF EXISTS ${quoteIdentifier(env.DB_NAME)}`);
     console.log(`Baza "${env.DB_NAME}" je obrisana.`);
   } finally {
     await connection.end();

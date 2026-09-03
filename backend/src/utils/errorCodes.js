@@ -14,6 +14,7 @@ const ErrorCodes = {
   LOCATION_IN_USE: { status: 409, message: 'Lokacija se koristi kod predmeta i ne može se obrisati.' },
   CANNOT_DEACTIVATE_SELF: { status: 409, message: 'Ne možete deaktivirati sopstveni nalog.' },
   ITEM_ID_TAKEN: { status: 409, message: 'Ovaj identifikator predmeta je već zauzet.' },
+  LOCATION_ID_TAKEN: { status: 409, message: 'Ovaj identifikator lokacije je već zauzet.' },
   SYNC_CONFLICT: { status: 409, message: 'Podatak je izmenjen na drugom uređaju.' },
   WRONG_CURRENT_PASSWORD: { status: 400, message: 'Trenutna lozinka nije tačna.' },
   INTERNAL_ERROR: { status: 500, message: 'Došlo je do greške. Pokušajte ponovo.' },

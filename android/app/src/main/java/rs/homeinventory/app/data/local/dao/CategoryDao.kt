@@ -24,4 +24,8 @@ interface CategoryDao {
 
     @Query("DELETE FROM categories")
     suspend fun clear()
+
+    // Isti razlog kao LocationDao.clearUnreferenced — vidi komentar tamo.
+    @Query("DELETE FROM categories WHERE id NOT IN (SELECT categoryId FROM inventory_items)")
+    suspend fun clearUnreferenced()
 }

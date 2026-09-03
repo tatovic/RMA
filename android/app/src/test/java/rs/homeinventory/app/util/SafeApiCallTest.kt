@@ -2,6 +2,8 @@ package rs.homeinventory.app.util
 
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Protocol
+import okhttp3.Request
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -21,6 +23,19 @@ class SafeApiCallTest {
 
     private fun errorBody(json: String) = json.toResponseBody("application/json".toMediaType())
 
+    // Uspesan odgovor BEZ tela sa zadatim statusnim kodom. Retrofit-ov Response.success(code, body)
+    // je ovde dvosmislen za Kotlin (sudara se sa success(body, headers)), pa se sirovi OkHttp odgovor
+    // gradi eksplicitno.
+    private fun <T> emptyBody(code: Int): Response<T> = Response.success(
+        null,
+        okhttp3.Response.Builder()
+            .code(code)
+            .message("No Content")
+            .protocol(Protocol.HTTP_1_1)
+            .request(Request.Builder().url("http://localhost/").build())
+            .build()
+    )
+
     @Test
     fun `uspesan odgovor sa telom vraca Resource Success`() = runTest {
         val result = safeApiCall(messages) { Response.success("podaci") }
@@ -30,9 +45,22 @@ class SafeApiCallTest {
 
     @Test
     fun `uspesan odgovor bez tela (204) vraca Resource Success Unit`() = runTest {
-        val result = safeApiCall<Unit>(messages) { Response.success(null) }
+        // Test je ranije gradio Response.success(null), sto je 200 bez tela, a ne 204 — naziv testa
+        // je tvrdio jedno, a provera radila drugo. Od tiketa 28 (nalaz C5) ta razlika je bitna, pa se
+        // ovde pravi stvaran 204.
+        val result = safeApiCall<Unit>(messages) { emptyBody(204) }
 
         assertTrue(result is Resource.Success)
+    }
+
+    // Nalaz C5 — `Unit as T` je tacan samo za 204. Svaki drugi 2xx bez tela znaci da je poziv ocekivao
+    // DTO i dobio prazno; ranije je i on prolazio kao uspeh, pa bi se pozivalac srusio tek pri prvom
+    // pristupu polju, daleko od mesta greske.
+    @Test
+    fun `uspesan odgovor bez tela koji nije 204 se tretira kao greska`() = runTest {
+        val result = safeApiCall<String>(messages) { emptyBody(200) }
+
+        assertEquals(Resource.Error(ErrorCode.UNKNOWN, ErrorCode.UNKNOWN.name), result)
     }
 
     @Test

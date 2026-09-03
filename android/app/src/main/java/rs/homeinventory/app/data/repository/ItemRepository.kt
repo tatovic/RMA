@@ -3,7 +3,6 @@ package rs.homeinventory.app.data.repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
-import retrofit2.Response
 import rs.homeinventory.app.data.local.dao.CategoryAggregate
 import rs.homeinventory.app.data.local.dao.CategoryDao
 import rs.homeinventory.app.data.local.dao.ItemDao
@@ -43,10 +42,10 @@ class ItemRepository @Inject constructor(
     fun observeCategoryAggregates(userId: String): Flow<List<CategoryAggregate>> =
         itemDao.observeCategoryAggregates(userId)
 
-    fun observeRecentItems(userId: String, limit: Int): Flow<List<ItemListRow>> =
-        itemDao.observeRecent(userId, limit)
-
     fun observeAllItems(userId: String): Flow<List<ItemListRow>> = itemDao.observeAll(userId)
+
+    // SCR-03/SCR-04 — "ima li korisnik ijedan predmet", bez povlacenja cele liste (tiket 28, nalaz C8).
+    fun observeItemCount(userId: String): Flow<Int> = itemDao.observeCount(userId)
 
     // SCR-04 — pretraga po sest polja (FR-031, tiket 19); :query mora stici vec normalizovan
     // (SearchQueryNormalizer), search() u ItemDao dodatno svodi kolone na istu golu latinicu.
@@ -122,6 +121,11 @@ class ItemRepository @Inject constructor(
     suspend fun deleteLocation(id: String): Resource<Unit> = withContext(Dispatchers.IO) {
         when (val result = safeApiCall(errorMessageProvider) { api.deleteLocation(id) }) {
             is Resource.Success -> {
+                // Server je lokaciju vec obrisao i kaskadom poneo svoje tombstone redove (migracija
+                // 001). Room to mora da ponovi rucno: soft-obrisani predmeti su i dalje redovi i
+                // strani kljuc ih drzi, pa bi hardDelete lokacije pao na SQLiteConstraintException
+                // (tiket 28, blokirajuci nalaz 04). Zivi predmeti ovde ne postoje — BR-014.
+                itemDao.hardDeleteByLocation(id)
                 locationDao.hardDelete(id)
                 Resource.Success(Unit)
             }
@@ -131,31 +135,11 @@ class ItemRepository @Inject constructor(
     }
 
     // SCR-03/SCR-04 — pokrece se pri otvaranju Dashboard-a i Inventara, posle svake izmene i rucno
-    // povlacenjem liste nadole (FR-092/FR-093/FR-094). Kategorije i lokacije se i dalje samo pune
-    // (server je njihov jedini izvor istine, OWN-05); predmeti idu kroz punu dvosmernu sinhronizaciju.
-    suspend fun refresh(): Resource<Unit> = withContext(Dispatchers.IO) {
-        val categoriesResult = pullAndStore({ api.getCategories() }) { response ->
-            categoryDao.upsertAll(response.categories.map { it.toEntity() })
-        }
-        if (categoriesResult !is Resource.Success) return@withContext categoriesResult
-
-        val locationsResult = pullAndStore({ api.getLocations() }) { response ->
-            locationDao.upsertAll(response.locations.map { it.toEntity() })
-        }
-        if (locationsResult !is Resource.Success) return@withContext locationsResult
-
-        syncManager.sync()
-    }
-
-    private suspend fun <T> pullAndStore(
-        call: suspend () -> Response<T>,
-        store: suspend (T) -> Unit
-    ): Resource<Unit> = when (val result = safeApiCall(errorMessageProvider, call)) {
-        is Resource.Success -> {
-            store(result.data)
-            Resource.Success(Unit)
-        }
-        is Resource.Error -> Resource.Error(result.code, result.message)
-        Resource.Loading -> Resource.Loading
-    }
+    // povlacenjem liste nadole (FR-092/FR-093/FR-094).
+    //
+    // Redosled kategorije -> lokacije -> predmeti se od tiketa 28 nalazi u SyncManager.sync(), pa ovde
+    // ostaje samo delegiranje. Ranije je zivilo ovde, a saveItem()/deleteItem() zovu sync() direktno i
+    // taj put je redosled preskakao — predmet sa servera koji pokazuje na jos nepoznatu lokaciju je
+    // obarao strani kljuc (blokirajuci nalaz 04).
+    suspend fun refresh(): Resource<Unit> = syncManager.sync()
 }

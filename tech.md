@@ -738,47 +738,85 @@ Upit se **normalizuje u Kotlinu** (`trim` + `lowercase` sa srpskim `Locale`) pre
 ### 8.6 Sinhronizacija
 
 ```kotlin
+// Ceo posao drži jedan Mutex: i Dashboard i Inventar zovu refresh() u init{}, a svako čuvanje
+// predmeta pokreće još jednu sinhronizaciju — dva paralelna prolaza dele isti watermark i isti
+// skup PENDING redova (tiket 28).
+private val syncMutex = Mutex()
+
 suspend fun sync(): Resource<Unit> = withContext(Dispatchers.IO) {
     if (!networkMonitor.isOnline()) return@withContext Resource.Error(ErrorCode.NO_NETWORK, "…")
 
-    // ---- 1. PUSH ----
-    itemDao.getPending().forEach { item ->
-        when (item.syncStatus) {
-            SyncStatus.PENDING_CREATE -> api.createItem(item.toDto()).onSuccess {
-                itemDao.setSyncStatus(item.id, SyncStatus.SYNCED)
-            }
-            SyncStatus.PENDING_UPDATE -> api.updateItem(item.id, item.toDto())
-                .onSuccess { itemDao.setSyncStatus(item.id, SyncStatus.SYNCED) }
-                .onConflict { server -> itemDao.upsert(server.toEntity(keepImagePath = item.imagePath)) }
-            SyncStatus.PENDING_DELETE -> api.deleteItem(item.id).onSuccess {
-                imageStorage.delete(item.imagePath)     // FR-086
-                itemDao.hardDelete(item.id)
-            }
-            SyncStatus.SYNCED -> Unit
-        }
-    }
+    syncMutex.withLock {
+        // ---- 0. REFERENTNI PODACI (kategorije pa lokacije) ----
+        // Redosled živi ovde, a ne u pozivaocu: predmet sa servera koji pokazuje na lokaciju koju
+        // Room još ne zna obara strani ključ.
+        pullReferenceData()?.let { return@withLock it }
 
-    // ---- 2. PULL (delta) ----
-    val since = syncMetadataDao.get(KEY_ITEMS_LAST_SYNC)
-    val response = api.getItems(updatedSince = since) ?: return@withContext Resource.Error(...)
-    response.items.forEach { dto ->
-        val local = itemDao.getById(dto.id)
-        if (local != null && local.syncStatus != SyncStatus.SYNCED) return@forEach  // lokalne izmene imaju prednost do push-a
-        if (dto.deletedAt != null) {
-            imageStorage.delete(local?.imagePath); itemDao.hardDelete(dto.id)
-        } else {
-            itemDao.upsert(dto.toEntity(keepImagePath = local?.imagePath))          // DB-RULE-02
+        // ---- 1. PUSH ----
+        itemDao.getPending(userId).forEach { item ->
+            when (item.syncStatus) {
+                SyncStatus.PENDING_CREATE -> api.createItem(item.toDto()).onSuccess {
+                    itemDao.upsert(it.toEntity(keepImagePath = item.imagePath))
+                }
+                SyncStatus.PENDING_UPDATE -> api.updateItem(item.id, item.toDto())
+                    .onSuccess { itemDao.upsert(it.toEntity(keepImagePath = item.imagePath)) }
+                    .onConflict { server -> itemDao.upsert(server.toEntity(keepImagePath = item.imagePath)) }
+                    .onNotFound { photoStorage.delete(item.imagePath); itemDao.hardDelete(item.id) }
+                SyncStatus.PENDING_DELETE -> api.deleteItem(item.id).onSuccess {
+                    photoStorage.delete(item.imagePath)     // FR-086
+                    itemDao.hardDelete(item.id)
+                }
+                SyncStatus.SYNCED -> Unit
+            }
+            // Transportna greška (NO_NETWORK/TIMEOUT/SERVER_UNAVAILABLE) ne govori ništa o
+            // preostalim predmetima, a trajna 4xx se neće promeniti — petlja u oba slučaja staje.
+            if (stopsPushLoop(error)) return@forEach
         }
+
+        // ---- 2. PULL (delta, STRANIČENO) ----
+        var pages = 0
+        while (pages++ < SYNC_MAX_PULL_PAGES) {
+            val since = syncMetadataDao.get(KEY_ITEMS_LAST_SYNC)
+            val response = api.getItems(since = since) ?: return@withLock Resource.Error(...)
+
+            var oldestSkipped: Long? = null
+            response.items.forEach { dto ->
+                val local = itemDao.getById(dto.id)
+                if (local != null && local.syncStatus != SyncStatus.SYNCED) {
+                    // Lokalne izmene imaju prednost do push-a. Watermark se posle SPUŠTA ispod ovog
+                    // reda — inače bi `since` prešao preko njega i istovremena serverska izmena
+                    // istog predmeta nikad ne bi bila ponovo isporučena.
+                    oldestSkipped = minOf(oldestSkipped ?: Long.MAX_VALUE, dto.updatedAt)
+                    return@forEach
+                }
+                // Jedan neispravan red sme da bude preskočen, ali ne sme da obori ceo sync.
+                runCatching {
+                    if (dto.deletedAt != null) {
+                        photoStorage.delete(local?.imagePath); itemDao.hardDelete(dto.id)
+                    } else {
+                        itemDao.upsert(dto.toEntity(keepImagePath = local?.imagePath))   // DB-RULE-02
+                    }
+                }.onFailure { Log.e(TAG, "…", it) }
+            }
+
+            val watermark = capBelowSkipped(response.nextSince, oldestSkipped)
+            syncMetadataDao.put(KEY_ITEMS_LAST_SYNC, watermark)                          // nikad sat sa telefona
+
+            if (watermark != response.nextSince) break   // spušten iza preskočenog reda
+            if (!response.hasMore) break                 // delta iscrpljena
+        }
+        Resource.Success(Unit)
     }
-    syncMetadataDao.put(KEY_ITEMS_LAST_SYNC, response.serverTime)                   // serversko vreme
-    Resource.Success(Unit)
 }
 ```
 
-**Tri pravila koja se ne smeju prekršiti:**
+**Četiri pravila koja se ne smeju prekršiti:**
 1. Push ide **pre** pull-a, inače bi serverska verzija pregazila lokalne izmene.
 2. `keepImagePath` se prosleđuje **pri svakom** mapiranju DTO → Entity (DB-RULE-02, FR-085).
-3. Za `items_last_sync_at` se koristi `serverTime` iz odgovora, nikad `System.currentTimeMillis()`.
+3. Watermark za `items_last_sync_at` je **`nextSince` iz odgovora servera**, upisan **posle svake strane**, nikad `System.currentTimeMillis()` i nikad jednom na kraju. `nextSince` je poslednji stvarno primenjen `updated_at` dok delta traje, odnosno serversko vreme kad se delta isprazni; `hasMore` kaže da li odmah sledi još jedna strana. Načelo je nepromenjeno — vreme za sinhronizaciju uvek dolazi sa servera — ali odgovor više nije jedna odsečena strana od 500 redova bez signala da ima još (tiket 28).
+4. `sync()` se izvršava **serijski**, pod `Mutex`-om. Preklapanje nije teorijsko: Dashboard i Inventar oba osvežavaju u `init{}`.
+
+`NetworkMonitor` (`util/NetworkMonitor.kt`, tiket 28) je obična provera stanja veze preko `ConnectivityManager`, ne garancija — mreža sme da otkaže i između provere i zahteva, pa puna obrada grešaka u `safeApiCall` ostaje. Postoji da offline sinhronizacija stane odmah, umesto da prođe kroz jedan konekcijski timeout po predmetu na čekanju.
 
 Sinhronizacija se pokreće iz `viewModelScope`; neuspeh je tih (log + eventualno Snackbar) i nikada ne menja UI u stanje greške ako lokalni podaci postoje (FR-097).
 

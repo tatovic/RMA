@@ -7,10 +7,18 @@ const env = require('../../config/env');
 const AppError = require('../../utils/AppError');
 const DEFAULT_LOCATIONS = require('../../db/locations');
 
+// `tv` (token_version) poništava sve ranije izdate tokene kad korisnik promeni lozinku —
+// authenticate.js poredi claim sa kolonom users.token_version (tiket 28, nalaz 12).
 const signToken = (user) =>
-  jwt.sign({ sub: user.id, role: user.role }, env.JWT_SECRET, {
+  jwt.sign({ sub: user.id, role: user.role, tv: user.token_version ?? 0 }, env.JWT_SECRET, {
     expiresIn: env.JWT_EXPIRES_IN,
   });
+
+// FR-017 traži da nepostojeći email i pogrešna lozinka budu nerazlučivi. Sama poruka je odavno ista,
+// ali je vreme odgovora odavalo razliku: promašaj je vraćao odmah, pogodak posle ~100ms bcrypt-a.
+// Zato se i na promašaju uporedi jedan fiksan hash — isti posao, isto trajanje (tiket 28, nalaz 12).
+// Hash odgovara lozinci koja se nigde ne koristi; njegova vrednost je nebitna, samo trošak poređenja.
+const DUMMY_PASSWORD_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 
 // Registracija: BR-001 (rola po redosledu prijave) i BR-015 (devet lokacija) u jednoj transakciji.
 const register = async ({ name, email, password }) => {
@@ -24,8 +32,12 @@ const register = async ({ name, email, password }) => {
       throw new AppError('EMAIL_ALREADY_EXISTS');
     }
 
-    const [countRows] = await connection.query('SELECT COUNT(*) AS count FROM users');
-    const role = countRows[0].count === 0 ? 'ADMIN' : 'USER';
+    // BR-001 — prvi registrovan korisnik postaje ADMIN. Običan COUNT(*) ne zaključava ništa, pa su
+    // dve istovremene registracije nad praznom tabelom obe videle nulu i obe postale ADMIN. `FOR
+    // UPDATE` nad praznim opsegom tera InnoDB na gap lock, koji drugu transakciju zadržava dok se
+    // prva ne commit-uje (tiket 28, nalaz A6).
+    const [existingUsers] = await connection.query('SELECT id FROM users LIMIT 1 FOR UPDATE');
+    const role = existingUsers.length === 0 ? 'ADMIN' : 'USER';
 
     const passwordHash = await bcrypt.hash(password, env.BCRYPT_ROUNDS);
     const userId = uuidv4();
@@ -71,6 +83,8 @@ const login = async ({ email, password }) => {
   const user = rows[0];
 
   if (!user) {
+    // Namerno poređenje sa fiksnim hash-om: izjednačava trajanje promašaja sa trajanjem pogotka.
+    await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
     throw new AppError('INVALID_CREDENTIALS');
   }
 
@@ -86,4 +100,4 @@ const login = async ({ email, password }) => {
   return { user, token: signToken(user) };
 };
 
-module.exports = { register, login };
+module.exports = { register, login, signToken };

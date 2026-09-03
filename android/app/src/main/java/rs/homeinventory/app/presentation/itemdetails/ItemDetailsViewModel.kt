@@ -72,8 +72,10 @@ class ItemDetailsViewModel @Inject constructor(
     // Brisanje (FR-025/FR-026) — soft delete lokalno pa odmah pokusaj slanja serveru; puna sinhronizacija je tiket 26.
     fun delete() {
         if (_deleteState.value is Resource.Loading) return
+        // Zastita se postavlja SINHRONO, pre launch-a — `launch` samo zakazuje korutinu, pa dva
+        // brza dodira oba prodju kroz proveru iznad (tiket 28, nalaz 09).
+        _deleteState.value = Resource.Loading
         viewModelScope.launch {
-            _deleteState.value = Resource.Loading
             itemRepository.deleteItem(itemId)
             _deleteState.value = Resource.Success(Unit)
         }

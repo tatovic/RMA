@@ -54,13 +54,17 @@ class DashboardViewModel @Inject constructor(
         .flatMapLatest { itemRepository.observeCategoryAggregates(it.id) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    private val recentItems: StateFlow<List<ItemListRow>> = currentUser
-        .flatMapLatest { itemRepository.observeRecentItems(it.id, DASHBOARD_RECENT_ITEMS_LIMIT) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
-
-    // FR-053 — kartica upozorenja treba SVE predmete, ne samo poslednjih pet kao recentItems.
+    // FR-053 — kartica upozorenja o garancijama treba SVE predmete, ne samo poslednjih pet.
     private val allItems: StateFlow<List<ItemListRow>> = currentUser
         .flatMapLatest { itemRepository.observeAllItems(it.id) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    // SCR-03 — poslednjih pet dodatih (FR-055) se izvodi iz allItems umesto zasebnim upitom. Oba
+    // upita imaju isti WHERE i isti `ORDER BY createdAt DESC`; jedina razlika je LIMIT, pa je
+    // "poslednjih pet" tacno prvih pet redova liste koju vec imamo. Ranije su se izvrsavala oba, i
+    // to Eagerly, pa je svaka izmena u bazi pokretala dva prolaza kroz istu tabelu (tiket 28, nalaz C8).
+    private val recentItems: StateFlow<List<ItemListRow>> = allItems
+        .map { it.take(DASHBOARD_RECENT_ITEMS_LIMIT) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     // FR-051/FR-052 — prag garancije korisnika, isti izvor kao u listi inventara (tiket 22).

@@ -55,10 +55,15 @@ class InventoryViewModel @Inject constructor(
     private val currentUser = authRepository.currentUser.filterNotNull()
 
     // SharingStarted.Eagerly — mora odrazavati pravo stanje lokalne baze nezavisno od toga
-    // da li Fragment vec sluša, jer refresh() proverava items.value pre nego sto UI pretplati state.
-    private val items: StateFlow<List<ItemListRow>> = currentUser
-        .flatMapLatest { itemRepository.observeAllItems(it.id) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    // da li Fragment vec sluša, jer refresh() proverava vrednost pre nego sto UI pretplati state.
+    //
+    // COUNT, ne cela lista (tiket 28, nalaz C8): jedino sto se od ovoga trazilo jeste da razdvoji
+    // "korisnik nema nijedan predmet" od "pretraga/filter nisu nista nasli". Ranije je to bio jos
+    // jedan observeAll() — upit identican onom u searchResults kad je polje za pretragu prazno, pa
+    // je svaka izmena u bazi vrtela dva ista upita i dva mapiranja nad citavom listom.
+    private val itemCount: StateFlow<Int> = currentUser
+        .flatMapLatest { itemRepository.observeItemCount(it.id) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     // FR-031/NFR-04 — cuva se u SavedStateHandle da uneti pojam prezivi rotaciju ekrana (tiket 19).
     val searchQuery: StateFlow<String> = savedStateHandle.getStateFlow(KEY_SEARCH_QUERY, "")
@@ -197,9 +202,9 @@ class InventoryViewModel @Inject constructor(
     val snackbarMessage: SharedFlow<String> = _snackbarMessage.asSharedFlow()
 
     val state: StateFlow<UiState<List<InventoryItemUi>>> = combine(
-        items, filteredResults, refreshPhase, warrantyThreshold
-    ) { allRows, filteredRows, phase, threshold ->
-        toUiState(allRows, filteredRows, phase, threshold)
+        itemCount, filteredResults, refreshPhase, warrantyThreshold
+    ) { totalCount, filteredRows, phase, threshold ->
+        toUiState(totalCount, filteredRows, phase, threshold)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Loading)
 
     init {
@@ -212,23 +217,23 @@ class InventoryViewModel @Inject constructor(
             when (val result = itemRepository.refresh()) {
                 is Resource.Error -> {
                     refreshPhase.value = RefreshPhase.Failed(result.message)
-                    if (items.value.isNotEmpty()) _snackbarMessage.emit(result.message)
+                    if (itemCount.value > 0) _snackbarMessage.emit(result.message)
                 }
                 else -> refreshPhase.value = RefreshPhase.Done
             }
         }
     }
 
-    // Prisustvo lokalnih podataka (allRows) se proverava odvojeno od filtriranih rezultata (filteredRows) -
+    // Prisustvo lokalnih podataka (totalCount) se proverava odvojeno od filtriranih rezultata (filteredRows) -
     // pretraga/filteri bez pogotka ne smeju da izgledaju kao da inventar nikad nije ucitan (Loading/Error).
     private fun toUiState(
-        allRows: List<ItemListRow>,
+        totalCount: Int,
         filteredRows: List<ItemListRow>,
         phase: RefreshPhase,
         thresholdDays: Int
     ): UiState<List<InventoryItemUi>> = when {
         filteredRows.isNotEmpty() -> UiState.Success(filteredRows.map { toItemUi(it, thresholdDays) })
-        allRows.isNotEmpty() -> UiState.Empty
+        totalCount > 0 -> UiState.Empty
         phase is RefreshPhase.Loading -> UiState.Loading
         phase is RefreshPhase.Failed -> UiState.Error(phase.message)
         else -> UiState.Empty

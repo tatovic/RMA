@@ -6,6 +6,10 @@ const { v4: uuidv4 } = require('uuid');
 const env = require('../config/env');
 const CATEGORIES = require('./categories');
 
+// Ime baze dolazi iz env.DB_NAME i ide u SQL kao identifikator (ne sme kao parametar), pa se
+// obavezno navodi backticks-ima uz udvajanje svakog backtick-a u samom imenu.
+const quoteIdentifier = (name) => `\`${name.replace(/`/g, '``')}\``;
+
 async function seedCategories(connection) {
   for (const category of CATEGORIES) {
     // INSERT IGNORE oslanja se na uq_categories_name — drugo pokretanje ne dira postojeće redove.
@@ -28,9 +32,21 @@ async function createDatabase() {
   });
 
   try {
+    const databaseName = quoteIdentifier(env.DB_NAME);
+    await connection.query(
+      `CREATE DATABASE IF NOT EXISTS ${databaseName} CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`
+    );
+    await connection.query(`USE ${databaseName}`);
+
+    // schema.sql sadrži samo tabele i računa na to da je baza već izabrana (vidi komentar u fajlu).
     const schemaSql = fs.readFileSync(path.resolve(__dirname, 'schema.sql'), 'utf8');
     await connection.query(schemaSql);
     console.log(`Šema baze "${env.DB_NAME}" je na mestu.`);
+
+    // Sveža baza već nosi sve iz schema.sql — migracije se samo evidentiraju, ne izvršavaju
+    // (inače bi 001 pokušao da doda strani ključ koji već postoji). db.md sekcija 11.
+    const { markAllApplied } = require('./migrate');
+    await markAllApplied(connection);
 
     await seedCategories(connection);
     console.log('Jedanaest globalnih kategorija je na mestu.');
@@ -48,4 +64,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { createDatabase, seedCategories };
+module.exports = { createDatabase, seedCategories, quoteIdentifier };

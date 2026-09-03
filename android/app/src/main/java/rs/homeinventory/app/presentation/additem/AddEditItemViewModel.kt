@@ -138,8 +138,12 @@ class AddEditItemViewModel @Inject constructor(
         _fieldErrors.value = errors
         if (parsed == null) return
 
+        // Zastita se postavlja SINHRONO, pre launch-a. `launch` samo zakazuje korutinu, pa su dva
+        // dodira u istom frame-u oba videla `null` i oba prosla dalje — u rezimu dodavanja bi svaki
+        // izmislio svoj UUID i nastala bi dva predmeta (tiket 28, nalaz 09).
+        _saveState.value = Resource.Loading
+
         viewModelScope.launch {
-            _saveState.value = Resource.Loading
             val user = currentUser.first()
             val existing = itemId?.let { itemRepository.getItem(it) }
             val now = System.currentTimeMillis()
@@ -172,7 +176,14 @@ class AddEditItemViewModel @Inject constructor(
                 seller = parsed.seller,
                 notes = parsed.notes,
                 createdAt = existing?.createdAt ?: now,
-                updatedAt = now, // izmena osvezava vreme poslednje promene, kreiranje ostaje netaknuto.
+                // DB-RULE-04 — `updatedAt` je verzija koju je server poslednju izdao za ovaj red, ne
+                // vreme lokalne izmene. Pri izmeni se prenosi nepromenjena, da bi je server prepoznao
+                // kao osnovu na koju se izmena naslanja. Sat na telefonu ovde nema sta da trazi:
+                // zaostao sat je pravio starije `updatedAt` od serverskog i izmena je zavrsavala kao
+                // konflikt cije je "resenje" bilo tiho brisanje korisnikovog unosa (tiket 28,
+                // blokirajuci nalaz 03). Kreiranje i dalje koristi `now` — server `updatedAt` pri
+                // POST-u ignorise (nema ga u createItemSchema, zod ga odbacuje), pa tu ne moze da smeta.
+                updatedAt = existing?.updatedAt ?: now,
                 deletedAt = existing?.deletedAt,
                 imagePath = newImagePath,
                 syncStatus = if (isCreate) SyncStatus.PENDING_CREATE else SyncStatus.PENDING_UPDATE

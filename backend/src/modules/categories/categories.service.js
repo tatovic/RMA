@@ -74,22 +74,43 @@ const updateCategory = async (id, input) => {
 };
 
 // BR-014 — kategorija u upotrebi (bar jedan neobrisan predmet bilo kog korisnika) se ne briše.
+//
+// Guard i brisanje idu u jednoj transakciji sa FOR UPDATE (tiket 28, nalaz A8), inače paralelan
+// POST /api/items sme da upiše predmet u kategoriju koja se upravo briše. Baš zato što je ovaj
+// brojač GLOBALAN (svi korisnici, BR-003) smemo da imamo ON DELETE CASCADE na fk_items_category:
+// kaskada može da dohvati samo tombstone redove, nikad ničiji živ predmet (migracija 001).
 const deleteCategory = async (id) => {
-  const current = await findById(id);
-  if (!current) {
-    throw new AppError('NOT_FOUND');
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [currentRows] = await connection.query('SELECT id FROM categories WHERE id = ? LIMIT 1 FOR UPDATE', [id]);
+    if (currentRows.length === 0) {
+      throw new AppError('NOT_FOUND');
+    }
+
+    const [[{ itemCount }]] = await connection.query(
+      'SELECT COUNT(*) AS itemCount FROM inventory_items WHERE category_id = ? AND deleted_at IS NULL FOR UPDATE',
+      [id]
+    );
+
+    if (itemCount > 0) {
+      throw new AppError('CATEGORY_IN_USE', { itemCount });
+    }
+
+    await connection.query('DELETE FROM categories WHERE id = ?', [id]);
+    await connection.commit();
+  } catch (err) {
+    await connection.rollback();
+    // Odbrana u dubinu — vidi isti komentar u locations.service.js (tiket 28, blokirajući nalaz 02).
+    if (err.code === 'ER_ROW_IS_REFERENCED_2' || err.errno === 1451) {
+      throw new AppError('CATEGORY_IN_USE', { itemCount: 0 });
+    }
+    throw err;
+  } finally {
+    connection.release();
   }
-
-  const [[{ itemCount }]] = await pool.query(
-    'SELECT COUNT(*) AS itemCount FROM inventory_items WHERE category_id = ? AND deleted_at IS NULL',
-    [id]
-  );
-
-  if (itemCount > 0) {
-    throw new AppError('CATEGORY_IN_USE', { itemCount });
-  }
-
-  await pool.query('DELETE FROM categories WHERE id = ?', [id]);
 };
 
 module.exports = { listCategories, createCategory, updateCategory, deleteCategory };

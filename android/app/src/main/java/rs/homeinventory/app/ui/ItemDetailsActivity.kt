@@ -8,6 +8,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import rs.homeinventory.app.R
 import rs.homeinventory.app.databinding.ActivityItemDetailsBinding
 import rs.homeinventory.app.util.EXTRA_ITEM_ID
+import rs.homeinventory.app.util.applySystemBarsPadding
 
 // ACT-3 — sadrzi nav_details.xml sa ItemDetails i AddEditItem ekranima (tech.md sekcija 10).
 // itemId (BR-007) stize kroz Intent extra i prosledjuje se grafu kao argument pocetne destinacije.
@@ -20,6 +21,7 @@ class ItemDetailsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityItemDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySystemBarsPadding() // NFR-10, tiket 28
 
         val itemId = intent.getStringExtra(EXTRA_ITEM_ID)
         if (itemId == null) {

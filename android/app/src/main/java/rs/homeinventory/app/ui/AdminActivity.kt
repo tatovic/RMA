@@ -15,6 +15,7 @@ import rs.homeinventory.app.R
 import rs.homeinventory.app.data.local.UserRole
 import rs.homeinventory.app.data.local.prefs.UserPreferences
 import rs.homeinventory.app.databinding.ActivityAdminBinding
+import rs.homeinventory.app.util.applySystemBarsPadding
 import javax.inject.Inject
 
 // ACT-4 — sadrzi nav_admin.xml, dostupna samo roli ADMIN (tech.md sekcija 10, tiket 25). Ulaz iz
@@ -33,6 +34,7 @@ class AdminActivity : AppCompatActivity() {
             if (userPreferences.role.first() == UserRole.ADMIN.name) {
                 binding = ActivityAdminBinding.inflate(layoutInflater)
                 setContentView(binding.root)
+                binding.root.applySystemBarsPadding() // NFR-10, tiket 28
                 setupNavigation()
             } else {
                 finish()

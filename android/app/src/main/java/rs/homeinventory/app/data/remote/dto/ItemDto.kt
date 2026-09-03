@@ -29,7 +29,14 @@ data class ItemDto(
     @SerializedName("deletedAt") val deletedAt: String? = null
 )
 
+// `nextSince` je vrednost koju klijent pamti za sledeci delta pull, `hasMore` da li odmah trazi
+// sledecu stranu (tiket 28, blokirajuci nalaz 01 — ranije je odgovor bio odsecen na 500 redova bez
+// ikakvog signala, pa je klijent trajno preskakao sve preko toga).
+// Oba polja su nullable radi kompatibilnosti sa starijim backendom koji ih ne salje: tada se pada
+// na `serverTime` i jednu stranu, tacno kao pre tiketa 28.
 data class ItemsResponseDto(
     @SerializedName("items") val items: List<ItemDto>,
-    @SerializedName("serverTime") val serverTime: String
+    @SerializedName("serverTime") val serverTime: String,
+    @SerializedName("nextSince") val nextSince: String? = null,
+    @SerializedName("hasMore") val hasMore: Boolean? = null
 )

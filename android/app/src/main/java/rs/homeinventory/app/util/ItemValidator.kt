@@ -71,8 +71,6 @@ object ItemValidator {
         val notes: String?
     )
 
-    private val SUPPORTED_CURRENCIES = setOf("RSD", "EUR", "USD", "CHF", "GBP", "BAM")
-
     // Vraca greske i, ako je unos ispravan, parsirane/normalizovane vrednosti spremne za cuvanje.
     fun validate(input: Input): Pair<Errors, Parsed?> {
         val name = input.name.trim() // VR-20 — trim pre validacije.
@@ -88,6 +86,8 @@ object ItemValidator {
         val (estimatedValue, estimatedValueError) =
             parseMoney(input.estimatedValueRaw, R.string.error_vr_item_estimated_value)
 
+        // VR-12 — jedna lista podrzanih valuta za celu aplikaciju (Constants.kt). Ranije je ovde
+        // stajao privatni duplikat iste sestorke, koji bi pri izmeni ostao neazuriran (tiket 28, nalaz C11).
         val currencyError = if (input.currency !in SUPPORTED_CURRENCIES) R.string.error_vr_item_currency else null
 
         val purchaseDateError =
@@ -169,7 +169,9 @@ object ItemValidator {
     private fun parseMoney(raw: String, @StringRes errorRes: Int): Pair<Long?, Int?> {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return null to null
+        // MoneyFormatter.parseToMinor vec odbija znak minus (regex ne dozvoljava negativan unos), pa
+        // je provera `minor < 0` bila mrtva grana — uklonjena u tiketu 28 (nalaz C11).
         val minor = MoneyFormatter.parseToMinor(trimmed)
-        return if (minor == null || minor < 0 || minor > MAX_MINOR) null to errorRes else minor to null
+        return if (minor == null || minor > MAX_MINOR) null to errorRes else minor to null
     }
 }

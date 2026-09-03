@@ -44,4 +44,9 @@ interface LocationDao {
 
     @Query("DELETE FROM locations")
     suspend fun clear()
+
+    // Prati ItemDao.clearExceptUnsyncedOf: lokacije se brisu sve OSIM onih koje jos drzi neki
+    // preostali predmet. Strani kljuc je NO_ACTION, pa bi brisanje roditelja sa zivim detetom palo.
+    @Query("DELETE FROM locations WHERE id NOT IN (SELECT locationId FROM inventory_items)")
+    suspend fun clearUnreferenced()
 }

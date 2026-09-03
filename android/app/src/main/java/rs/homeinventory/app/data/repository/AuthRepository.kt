@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import retrofit2.Response
 import rs.homeinventory.app.data.local.HomeInventoryDatabase
+import rs.homeinventory.app.data.local.dao.ItemDao
 import rs.homeinventory.app.data.local.dao.UserDao
 import rs.homeinventory.app.data.local.prefs.UserPreferences
 import rs.homeinventory.app.data.remote.api.BackendApi
@@ -25,6 +26,7 @@ import javax.inject.Singleton
 class AuthRepository @Inject constructor(
     private val api: BackendApi,
     private val userDao: UserDao,
+    private val itemDao: ItemDao,
     private val prefs: UserPreferences,
     private val database: HomeInventoryDatabase,
     private val errorMessageProvider: ErrorMessageProvider
@@ -65,6 +67,9 @@ class AuthRepository @Inject constructor(
             is Resource.Success -> {
                 val auth = result.data
                 prefs.saveSession(auth.token, auth.user.id, auth.user.role)
+                // OWN-07 — istekla sesija od tiketa 28 ostavlja neposlat rad u bazi (BR-005). Ako se
+                // sada prijavljuje DRUGI nalog, ti redovi su tudji i ne smeju da ostanu na uredjaju.
+                itemDao.clearOtherUsers(auth.user.id)
                 val entity = auth.user.toEntity()
                 userDao.upsert(entity)
                 Resource.Success(entity.toDomain())
