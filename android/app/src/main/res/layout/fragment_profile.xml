@@ -57,7 +57,7 @@
         tools:text="Administrator"
         tools:visibility="visible" />
 
-    <!-- US-15/BR-012 — valuta prikaza, zatvorena lista od sest podrzanih valuta (tiket 21). -->
+    <!-- US-15/BR-012 — valuta prikaza, zatvorena lista podrzanih valuta (tiket 21). -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/layoutCurrency"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
@@ -99,6 +99,27 @@
             android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Izbor teme (svetla/tamna/sistemska), primenjuje se odmah bez restarta aplikacije. -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/layoutTheme"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/auth_field_spacing"
+        android:hint="@string/profile_label_theme"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layoutWarrantyThreshold"
+        tools:visibility="visible">
+
+        <AutoCompleteTextView
+            android:id="@+id/editTheme"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none" />
+    </com.google.android.material.textfield.TextInputLayout>
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonLocations"
         style="@style/Widget.Material3.Button.OutlinedButton"
@@ -109,7 +130,7 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layoutWarrantyThreshold"
+        app:layout_constraintTop_toBottomOf="@id/layoutTheme"
         tools:visibility="visible" />
 
     <!-- FR-100 — vidljivo samo roli ADMIN (tiket 25). -->

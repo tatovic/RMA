@@ -1,5 +1,6 @@
 package rs.homeinventory.app.presentation.profile
 
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import rs.homeinventory.app.data.local.prefs.ThemePreferences
 import rs.homeinventory.app.data.local.prefs.WarrantyPreferences
 import rs.homeinventory.app.data.repository.AuthRepository
 import rs.homeinventory.app.domain.model.User
@@ -22,7 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val warrantyPreferences: WarrantyPreferences
+    private val warrantyPreferences: WarrantyPreferences,
+    private val themePreferences: ThemePreferences
 ) : ViewModel() {
 
     val user: StateFlow<User?> = authRepository.currentUser
@@ -31,7 +34,7 @@ class ProfileViewModel @Inject constructor(
     private val _loggedOut = MutableStateFlow(false)
     val loggedOut: StateFlow<Boolean> = _loggedOut.asStateFlow()
 
-    // US-15/BR-012 — lista valuta ponudjenih u padajucem meniju je zatvorena, uvek istih sest.
+    // BR-012 — lista valuta ponudjenih u padajucem meniju je zatvorena, uvek iste tri.
     val supportedCurrencies: List<String> = SUPPORTED_CURRENCIES
 
     private val _currencyUpdateError = MutableStateFlow<String?>(null)
@@ -50,6 +53,23 @@ class ProfileViewModel @Inject constructor(
 
     fun updateWarrantyThreshold(days: Int) {
         viewModelScope.launch { warrantyPreferences.saveThresholdDays(days) }
+    }
+
+    // Izbor teme — cetiri moguce vrednosti svedene na tri ponudjene (sistemska/svetla/tamna).
+    val nightModeOptions: List<Int> = listOf(
+        AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
+        AppCompatDelegate.MODE_NIGHT_NO,
+        AppCompatDelegate.MODE_NIGHT_YES
+    )
+
+    val nightMode: StateFlow<Int> = themePreferences.nightMode
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+
+    // AppCompatDelegate.setDefaultNightMode se poziva odmah da bi se sve otvorene Activity-je
+    // ponovo nacrtale u novoj temi bez restarta aplikacije; DataStore cuva izbor za sledece pokretanje.
+    fun updateNightMode(mode: Int) {
+        viewModelScope.launch { themePreferences.saveNightMode(mode) }
+        AppCompatDelegate.setDefaultNightMode(mode)
     }
 
     // BR-005 — brise token i kompletan sadrzaj lokalne baze.

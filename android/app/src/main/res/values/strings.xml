@@ -75,6 +75,12 @@
     <string name="profile_label_warranty_threshold">Prag za upozorenje o garanciji</string>
     <string name="warranty_threshold_days_format">%d dana</string>
 
+    <!-- Izbor teme u Profilu (svetla/tamna/sistemska). -->
+    <string name="profile_label_theme">Tema</string>
+    <string name="theme_option_system">Sistemska</string>
+    <string name="theme_option_light">Svetla</string>
+    <string name="theme_option_dark">Tamna</string>
+
     <!-- SCR-03 Dashboard — tiket 13. -->
     <string name="dashboard_total_items_label">Ukupno predmeta</string>
     <string name="dashboard_total_value_label">Ukupna vrednost</string>
@@ -99,6 +105,7 @@
     <string name="statistics_unconverted_row">Kurs za %1$s trenutno nije dostupan — %2$s nije uračunato u zbir.</string>
     <string name="statistics_value_by_category_title">Vrednost po kategorijama</string>
     <string name="statistics_count_by_category_title">Broj predmeta po kategorijama</string>
+    <string name="statistics_value_trend_title">Vrednost inventara kroz vreme</string>
     <string name="statistics_category_table_title">Pregled po kategorijama</string>
     <string name="statistics_table_header_category">Kategorija</string>
     <string name="statistics_table_header_count">Broj</string>

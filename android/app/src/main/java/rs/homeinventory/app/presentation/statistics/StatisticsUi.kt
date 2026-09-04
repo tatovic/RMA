@@ -14,7 +14,10 @@ data class StatisticsUi(
     val categoryStats: List<CategoryStatUi>,
     val mostExpensiveItem: MostExpensiveItemUi?,
     // Uvek svo cetiri statusa (BR-010), i kad je broj 0, da se raspodela ne menja oblik.
-    val warrantyBreakdown: List<WarrantyBreakdownUi>
+    val warrantyBreakdown: List<WarrantyBreakdownUi>,
+    // Kumulativna vrednost po mesecu kupovine, hronoloski — predmeti bez datuma kupovine ili bez
+    // dostupnog kursa se izostavljaju (isti duh kao BR-009/BR-013 kod ostalih zbirova).
+    val valueTrend: List<ValueTrendPointUi>
 )
 
 data class CategoryStatUi(
@@ -38,4 +41,9 @@ data class MostExpensiveItemUi(
 data class WarrantyBreakdownUi(
     val status: WarrantyStatus,
     val itemCount: Int
+)
+
+data class ValueTrendPointUi(
+    val monthLabel: String,
+    val cumulativeValueMinor: Long
 )

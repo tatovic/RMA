@@ -12,11 +12,15 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
@@ -81,6 +85,7 @@ class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
         renderUnconverted(data.unconvertedAmounts)
         renderPieChart(data.categoryStats)
         renderBarChart(data.categoryStats)
+        renderValueTrend(data.valueTrend)
         renderCategoryTable(data.categoryStats)
 
         binding.textMostExpensiveItem.text = data.mostExpensiveItem?.let {
@@ -173,6 +178,48 @@ class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
             valueFormatter = IndexAxisValueFormatter(stats.map { it.categoryName })
         }
         chart.setFitBars(true)
+        chart.invalidate()
+    }
+
+    // Kumulativna vrednost inventara po mesecu kupovine; skriveno kad nijedan predmet nema
+    // upotrebljiv datum/kurs (buildValueTrend u ViewModel-u), umesto praznog grafikona.
+    private fun renderValueTrend(points: List<ValueTrendPointUi>) {
+        val hasTrend = points.isNotEmpty()
+        binding.textValueTrendTitle.isVisible = hasTrend
+        binding.chartValueTrend.isVisible = hasTrend
+        if (!hasTrend) return
+
+        val chart: LineChart = binding.chartValueTrend
+        val onSurfaceColor = themeOnSurfaceColor()
+        val lineColor = MaterialColors.getColor(binding.root, MaterialR.attr.colorPrimary)
+
+        val entries = points.mapIndexed { index, point -> Entry(index.toFloat(), point.cumulativeValueMinor / 100f) }
+        val dataSet = LineDataSet(entries, getString(R.string.statistics_value_trend_title)).apply {
+            color = lineColor
+            setCircleColor(lineColor)
+            circleRadius = 2.5f
+            setDrawCircleHole(false)
+            // Desetine mesecnih tacaka bi se preklapale sa brojevima iznad svake — dovoljno je
+            // pratiti liniju i osu, tacna vrednost mesta je dostupna dodirom (MPAndroidChart highlight).
+            setDrawValues(false)
+            setDrawFilled(true)
+            fillColor = lineColor
+            fillAlpha = 40
+        }
+        chart.data = LineData(dataSet)
+        chart.description.isEnabled = false
+        chart.legend.isEnabled = false
+        chart.axisRight.isEnabled = false
+        chart.axisLeft.textColor = onSurfaceColor
+        chart.axisLeft.axisMinimum = 0f
+        chart.xAxis.apply {
+            position = XAxis.XAxisPosition.BOTTOM
+            textColor = onSurfaceColor
+            granularity = 1f
+            labelRotationAngle = -45f
+            setDrawGridLines(false)
+            valueFormatter = IndexAxisValueFormatter(points.map { it.monthLabel })
+        }
         chart.invalidate()
     }
 

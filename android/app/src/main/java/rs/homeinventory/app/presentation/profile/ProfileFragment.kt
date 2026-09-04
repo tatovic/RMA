@@ -55,6 +55,16 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
             viewModel.updateWarrantyThreshold(viewModel.warrantyThresholdOptions[position])
         }
 
+        val themeLabels = listOf(
+            R.string.theme_option_system, R.string.theme_option_light, R.string.theme_option_dark
+        ).map(::getString)
+        binding.editTheme.setAdapter(
+            ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, themeLabels)
+        )
+        binding.editTheme.setOnItemClickListener { _, _, position, _ ->
+            viewModel.updateNightMode(viewModel.nightModeOptions[position])
+        }
+
         binding.buttonLocations.setOnClickListener {
             findNavController().navigate(R.id.action_profileFragment_to_locationsFragment)
         }
@@ -80,6 +90,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 launch { viewModel.loggedOut.collect { if (it) goToAuthentication() } }
                 launch { viewModel.currencyUpdateError.collect(::showCurrencyUpdateError) }
                 launch { viewModel.warrantyThresholdDays.collect(::renderWarrantyThreshold) }
+                launch { viewModel.nightMode.collect(::renderNightMode) }
                 launch { viewModel.isSavingCurrency.collect(::renderSavingCurrency) }
             }
         }
@@ -90,7 +101,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         binding.progressLoading.isVisible = user == null
         val contentViews = listOf(
             binding.textName, binding.textEmail, binding.textRole,
-            binding.layoutCurrency, binding.layoutWarrantyThreshold,
+            binding.layoutCurrency, binding.layoutWarrantyThreshold, binding.layoutTheme,
             binding.buttonLocations, binding.buttonLogout
         )
         contentViews.forEach { it.isVisible = user != null }
@@ -109,6 +120,12 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     // false — postavlja tekst bez ponovnog filtriranja padajuce liste.
     private fun renderWarrantyThreshold(days: Int) {
         binding.editWarrantyThreshold.setText(getString(R.string.warranty_threshold_days_format, days), false)
+    }
+
+    // false — postavlja tekst bez ponovnog filtriranja padajuce liste.
+    private fun renderNightMode(mode: Int) {
+        val position = viewModel.nightModeOptions.indexOf(mode).coerceAtLeast(0)
+        binding.editTheme.setText(binding.editTheme.adapter?.getItem(position) as? String, false)
     }
 
     private fun showCurrencyUpdateError(message: String?) {

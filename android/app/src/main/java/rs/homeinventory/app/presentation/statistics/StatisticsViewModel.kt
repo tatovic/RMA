@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
+import java.time.YearMonth
+import java.util.Locale
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -132,8 +134,37 @@ class StatisticsViewModel @Inject constructor(
             },
             categoryStats = categoryStats,
             mostExpensiveItem = findMostExpensiveItem(items, user.currency, rates),
-            warrantyBreakdown = buildWarrantyBreakdown(items, warrantyThresholdDays)
+            warrantyBreakdown = buildWarrantyBreakdown(items, warrantyThresholdDays),
+            valueTrend = buildValueTrend(items, user.currency, rates)
         )
+    }
+
+    // Kumulativna vrednost po mesecu kupovine — predmeti bez datuma kupovine ili bez dostupnog
+    // kursa (BR-013) se izostavljaju, isto kao kod findMostExpensiveItem iznad.
+    private fun buildValueTrend(
+        items: List<ItemListRow>,
+        displayCurrency: String,
+        rates: Map<String, Double>
+    ): List<ValueTrendPointUi> {
+        val monthlyTotals = items
+            .mapNotNull { row ->
+                val date = DateMapper.parseLocalDate(row.purchaseDate) ?: return@mapNotNull null
+                val converted = CurrencyConverter.convert(row.effectiveValueMinor(), row.currency, displayCurrency, rates)
+                    ?: return@mapNotNull null
+                YearMonth.from(date) to converted
+            }
+            .groupingBy { it.first }
+            .fold(0L) { acc, pair -> acc + pair.second }
+            .toSortedMap()
+
+        var cumulative = 0L
+        return monthlyTotals.map { (month, monthTotal) ->
+            cumulative += monthTotal
+            ValueTrendPointUi(
+                monthLabel = String.format(Locale.getDefault(), "%02d/%d", month.monthValue, month.year),
+                cumulativeValueMinor = cumulative
+            )
+        }
     }
 
     // BR-009 — poredjenje ide iskljucivo preko valute prikaza; predmet cija valuta nema kurs se ne
