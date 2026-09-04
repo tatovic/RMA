@@ -130,7 +130,7 @@ Sve enumeracije se čuvaju kao **tekst velikim slovima**, nikada kao broj — br
 | Enum | Dozvoljene vrednosti | MySQL tip | Room tip |
 |---|---|---|---|
 | `UserRole` | `USER`, `ADMIN` | `ENUM('USER','ADMIN')` | `TEXT` + TypeConverter |
-| `Currency` | `RSD`, `EUR`, `USD`, `CHF`, `GBP`, `BAM` | `CHAR(3)` | `TEXT` |
+| `Currency` | `RSD`, `EUR`, `USD` | `CHAR(3)` | `TEXT` |
 | `SyncStatus` | `SYNCED`, `PENDING_CREATE`, `PENDING_UPDATE`, `PENDING_DELETE` | — (samo lokalno) | `TEXT` + TypeConverter |
 | `WarrantyStatus` | `AKTIVNA`, `USKORO_ISTICE`, `ISTEKLA`, `NEPOZNATO` | — (računa se) | — (računa se) |
 
@@ -443,7 +443,7 @@ data class InventoryItemEntity(
 @Entity(tableName = "exchange_rates", primaryKeys = ["baseCode", "targetCode"])
 data class ExchangeRateEntity(
     val baseCode: String,     // uvek "EUR" - API se poziva sa EUR bazom
-    val targetCode: String,   // RSD, USD, CHF, GBP, BAM, EUR
+    val targetCode: String,   // RSD, USD, EUR
     val rate: Double,         // kurs, NIJE novac - Double je ovde ispravan
     val fetchedAt: Long       // epoch millis, za TTL od 24h
 )
@@ -818,7 +818,7 @@ Runner je `backend/src/db/migrate.js`. `ALTER TABLE` je u MySQL-u DDL i implicit
 | 500 predmeta | ~300 KB | Zanemarljivo za SQLite |
 | Jedna fotografija posle kompresije | ~150–400 KB | 1080 px, JPEG 80 (FR-082) |
 | 60 fotografija | ~15–25 MB | U internal storage, **ne u bazi** |
-| `exchange_rates` | < 1 KB | Šest valuta |
+| `exchange_rates` | < 1 KB | Tri valute |
 
 Ovo je i razlog za odluku iz FR-083: da su fotografije u bazi kao BLOB, baza bi sa 60 predmeta prešla 20 MB i svaki upit bi usporio.
 

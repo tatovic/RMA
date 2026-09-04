@@ -277,14 +277,14 @@ Poređenje je isključivo po kalendarskom datumu, bez vremena i bez vremenske zo
 **US-15 — Konverzija valuta**
 > Kao korisnik, želim da vidim vrednost u valuti koju razumem.
 
-- [ ] Podržane valute: RSD, EUR, USD, CHF, GBP, BAM (BR-012)
+- [ ] Podržane valute: RSD, EUR, USD (BR-012)
 - [ ] Valuta prikaza se bira u Profilu, podrazumevano RSD
 - [ ] Kursevi se povlače sa eksternog API-ja asinhrono, bez blokiranja UI-ja
 - [ ] Kursevi se keširaju lokalno; keš stariji od 24h se osvežava
 - [ ] Bez interneta se koristi poslednji poznati kurs iz keša
 - [ ] Neuspeh mrežnog poziva **nikada ne ruši ekran** — prikazuje se poslednja poznata vrednost
 
-**BR-012 — Zatvorena lista valuta.** Aplikacija podržava tačno šest valuta: `RSD`, `EUR`, `USD`, `CHF`, `GBP`, `BAM`. Sve imaju dve decimale (eksponent 2). Eksterni API vraća 166 valuta — koriste se samo ovih šest.
+**BR-012 — Zatvorena lista valuta.** Aplikacija podržava tačno tri valute: `RSD`, `EUR`, `USD`. Sve imaju dve decimale (eksponent 2). Eksterni API vraća 166 valuta — koriste se samo ove tri. (Do 2026-09-04 lista je uključivala i `CHF`, `GBP`, `BAM` — svedeno na tri zbog realne upotrebe u domaćinstvu; istorija verifikacije sa svih šest ostaje u tiketu 21 u sekciji 16.)
 
 **BR-013 — Nedostupan kurs se prijavljuje, ne pretpostavlja.** Ako za neku valutu nema kursa ni iz mreže ni iz keša, zbir se **ne računa sa kursom 1.0**. Prikazuje se poruka „Kurs trenutno nije dostupan" i vrednost te valute se izdvaja posebno.
 
@@ -597,7 +597,7 @@ Validacija se izvršava **i na Androidu i na serveru**. Klijentska validacija je
 | VR-09 | `item.quantity` | ceo broj, 1–9999 | „Količina mora biti najmanje 1" |
 | VR-10 | `item.purchasePrice` | opciono, ne negativan, max 999.999.999,99 | „Cena ne može biti negativna" |
 | VR-11 | `item.estimatedValue` | ista pravila kao VR-10 | „Vrednost ne može biti negativna" |
-| VR-12 | `item.currency` | mora biti iz liste RSD, EUR, USD, CHF, GBP, BAM | „Nepodržana valuta" |
+| VR-12 | `item.currency` | mora biti iz liste RSD, EUR, USD | „Nepodržana valuta" |
 | VR-13 | `item.purchaseDate` | opciono, format `YYYY-MM-DD`, ne u budućnosti | „Datum kupovine ne može biti u budućnosti" |
 | VR-14 | `item.warrantyExpirationDate` | opciono, ne pre datuma kupovine | „Datum garancije ne može biti pre datuma kupovine" |
 | VR-15 | `item.serialNumber` | opciono, max 100 znakova | — |

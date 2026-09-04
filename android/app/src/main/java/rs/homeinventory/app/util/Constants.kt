@@ -7,7 +7,7 @@ const val DASHBOARD_RECENT_ITEMS_LIMIT = 5
 const val EXTRA_ITEM_ID = "extra_item_id"
 
 // SCR-06 — VR-12, valute podrzane na klijentu.
-val SUPPORTED_CURRENCIES = listOf("RSD", "EUR", "USD", "CHF", "GBP", "BAM")
+val SUPPORTED_CURRENCIES = listOf("RSD", "EUR", "USD")
 
 // Fragment Result API — AddEditItemFragment vraca rezultat pozivajucem ekranu (tech.md sekcija 8.6).
 const val RESULT_ITEM_SAVED = "result_item_saved"

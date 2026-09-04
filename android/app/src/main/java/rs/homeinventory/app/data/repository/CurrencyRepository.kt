@@ -40,7 +40,7 @@ class CurrencyRepository @Inject constructor(
                 // tech.md 7.2 — "result" mora eksplicitno javiti uspeh, HTTP status se ne uzima zdravo za gotovo.
                 if (dto.result != "success") return@withContext fallbackOrError(cachedRates)
 
-                // BR-012 — od 166 valuta cuva se samo sest podrzanih.
+                // BR-012 — od 166 valuta cuva se samo tri podrzane.
                 val filtered = dto.rates.filterKeys { it in SUPPORTED_CURRENCIES }
                 val now = System.currentTimeMillis()
                 dao.upsertAll(filtered.map { (code, rate) -> ExchangeRateEntity(BASE_CURRENCY, code, rate, now) })

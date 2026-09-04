@@ -586,7 +586,7 @@ helmet -> cors -> express.json({limit:'1mb'}) -> morgan
 }
 ```
 
-`rates` sadrži 166 valuta; koristi se šest iz BR-012. Vrednosti su JSON brojevi.
+`rates` sadrži 166 valuta; koriste se tri iz BR-012 (`RSD`, `EUR`, `USD`). Vrednosti su JSON brojevi.
 
 ### 7.2 DTO i API interfejs
 
