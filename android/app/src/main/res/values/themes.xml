@@ -16,4 +16,13 @@
              (edge-to-edge je obavezan), pa je bio mrtav atribut. Razmak za statusnu i
              navigacionu traku sada dodaje View.applySystemBarsPadding() na korenu aktivnosti. -->
     </style>
+
+    <!-- Pocetni ekran (SplashScreen API) — prikazan dok MainActivity asinhrono proverava
+         vazecu sesiju (AuthRepository.hasValidSession), pa maskira prazan frejm koji bi se
+         inace video pre nego sto se prikaze Dashboard ili Login. -->
+    <style name="Theme.HomeInventory.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/md_theme_light_primary</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.HomeInventory</item>
+    </style>
 </resources>

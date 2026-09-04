@@ -116,6 +116,8 @@ dependencies {
     implementation(libs.swiperefreshlayout)
     implementation(libs.recyclerview)
 
+    implementation(libs.splashscreen)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
@@ -35,9 +36,18 @@ class MainActivity : AppCompatActivity() {
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // installSplashScreen() mora biti pozvan pre super.onCreate() — drzi pocetni ekran
+        // na ekranu dok se ne zavrsi provera sesije ispod, umesto praznog frejma.
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        var sessionCheckDone = false
+        splashScreen.setKeepOnScreenCondition { !sessionCheckDone }
+
         lifecycleScope.launch {
-            if (authRepository.hasValidSession()) {
+            val hasValidSession = authRepository.hasValidSession()
+            sessionCheckDone = true
+            if (hasValidSession) {
                 binding = ActivityMainBinding.inflate(layoutInflater)
                 setContentView(binding.root)
                 binding.root.applySystemBarsPadding() // NFR-10, tiket 28
